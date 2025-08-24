@@ -1,0 +1,47 @@
+# ── Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+*.log
+
+# ── Virtual envs
+.venv/
+cybersentinelxVenv/
+
+# ── IDE/OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# ── Data & artifacts (keep out of git)
+data/
+*.csv
+*.xlsx
+*.xls
+*.pkl
+*.npy
+*.sav
+db.sqlite3
+
+# ── Notebooks/cache/coverage
+.ipynb_checkpoints/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ── Terraform (state & secrets never in git)
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+*.tfvars
+*.tfvars.json
+
+# ── Local env/secrets
+.env
+.env.*
+
+NUL

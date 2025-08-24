@@ -1,0 +1,137 @@
+{% extends 'linkScanner/base.html' %}
+
+{% block body %}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+    a{
+      color:black;
+    }
+    body {
+        background-image: url('/static/linkScanner/c1.png');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat; 
+        height: 100vh;
+        margin:0;
+    }
+
+        .card-container {
+          perspective: 1000px;
+          display: flex;
+          justify-content: space-around;
+          align-items: center;
+          height: 500px;
+          
+          overflow: hidden;
+          margin-top:100px;
+          
+          
+        }
+        .card h4 {
+            margin-top: 10px; 
+            color:#fff;
+          }
+    
+        .card {
+          width: 300px;
+          height: 400px;
+          position: relative;
+          transform-style: preserve-3d;
+          transition: transform 0.5s;
+          border-radius: 20px;
+          box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+          
+
+          
+        }
+    
+        .card:hover {
+            box-shadow: 0 0 20px 5px rgba(5, 181, 181, 0.6); 
+          transform: rotateY(180deg);
+        }
+    
+        .card .side {
+          position: absolute;
+          width: 100%;
+          height: 100%;
+          backface-visibility: hidden;
+          display: flex;
+          flex-direction: column; 
+          justify-content: center;
+          align-items: center;
+          text-align: center;
+          border-radius: 20px; 
+          
+        }
+    
+        .card .front {
+          background-color: #3bb2c03d;
+        }
+       
+        .card .back {
+          background-color: #3bb2c03d;
+          transform: rotateY(180deg);
+        }
+    
+        .card img {
+          max-width: 100%;
+          max-height: 100%;
+        }
+      </style>
+    </head>
+    <body>
+    
+    <div class="card-container">
+      <div class="card">
+        <div class="side front">
+          <img src="/static/linkScanner/boy.png" alt="Card 1">
+          <h4>General Queries</h4>
+        </div>
+        <div class="side back">
+          <h2>CONTACT US AT</h2>
+          <h4>email:<a href="mailto:scamsniffer@gmail.com">scamsniffer@gmail.com</a></h4>
+          <h4>phone:<a href="tel:123456789">123456789</a></h4>
+        </div>
+      </div>
+    
+      <div class="card">
+        <div class="side front">
+          <img src="/static/linkScanner/question.png" alt="Card 2">
+          <h4>I don't understand!</h4>
+        </div>
+        <div class="side back">
+          <h2>Don't Worry We're Here!</h2>
+          <h4>You can refer to our learning resources in <a href="/learn">our page</a></h4>
+        </div>
+      </div>
+    
+      <div class="card">
+        <div class="side front">
+          <img src="/static/linkScanner/girl.png" alt="Card 3">
+          <h4>I'm phished</h4>
+        </div>
+        <div class="side back">
+          <h2>Stay Calm and follow the link</h2>
+          <h4>Lodge a complaint at <a href="https://cybercrime.gov.in" target="_blank">cyber cell</a></h4>
+        </div>
+      </div>
+    
+      <div class="card">
+        <div class="side front">
+          <img src="/static/linkScanner/stat.png" alt="Card 4">
+          <h4>Our Efficiency</h4>
+        </div>
+        <div class="side back">
+          <h1 style="font-size: medium; color: white;">Model Performance (Random Forest Classifier)</h1>
+          <img src="/static/linkScanner/pie.png" style="border-radius: 5px; margin:1px" alt="Pie Chart">
+        </div>
+      </div>
+    </div>
+    
+    </body>
+
+
+    
+{% endblock %}

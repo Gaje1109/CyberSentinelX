@@ -1,0 +1,125 @@
+{% extends 'linkScanner/base.html' %}
+{% block body %}
+<style>
+    body {
+        background-image: url('/static/linkScanner/green.png');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        height: 100vh;
+        margin: 0;
+    }
+</style>
+
+{% if result == 'Good' %}
+<style>
+    #header {
+        background: #7dd159;
+    }
+
+    .content {
+        background-color: #3bc05f3d;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.6);
+    }
+
+    .content:hover {
+        box-shadow: 0 0 20px 5px rgb(125 209 89);
+    }
+
+    #display-result {
+        color: #00ff00;
+        /* Bright Green */
+        margin-bottom: 20px;
+    }
+
+    .proceed-button {
+
+        padding: 12px 24px;
+        font-family: 'Spartan', sans-serif;
+        font-size: 16px;
+        font-weight: bold;
+        color: #fff;
+        background-color: #00ff007d;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+        text-decoration: none;
+        /* Added for link appearance */
+    }
+
+    .proceed-button:hover {
+        background-color: #2BFF05;
+    }
+</style>
+
+<section id="another-section">
+    <div class="content">
+        <h2 id="display-result">Safe site to use</h2>
+        <p><a id="proceed-button" class="proceed-button" href="{{ target_url }}" target="_blank">Click here to proceed</a></p>
+    </div>
+</section>
+{% elif result == "Thank you!" %}
+<style>
+    body {
+        background-image: url('/static/linkScanner/r1.png');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        height: 100vh;
+        margin: 0;
+    }
+
+    .content {
+        background-color: #05b5b5;
+    }
+
+    .content:hover {
+        box-shadow: 0 0 20px 5px rgba(5, 181, 181, 0.6);
+    }
+</style>
+
+<section id="another-section">
+    <div class="content">
+        <h2 id="display-result">Thank you for your feedback</h2>
+    </div>
+</section>
+
+{% else %}
+<style>
+    body {
+        background-image: url('/static/linkScanner/red.png');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        height: 100vh;
+        margin: 0;
+    }
+
+    #header {
+        background: #c20101;
+    }
+
+    .content {
+        background-color: #6826263d;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.6);
+    }
+
+    .content:hover {
+        box-shadow: 0 0 20px 5px rgb(121 51 40);
+    }
+
+    #display-result1 {
+        color: #FF051F;
+
+    }
+</style>
+
+<section id="another-section">
+    <div class="content">
+        <h2 id="display-result1">Unsafe site to use</h2>
+    </div>
+</section>
+
+{% endif %}
+{% endblock body %}

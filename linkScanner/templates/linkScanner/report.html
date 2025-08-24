@@ -1,0 +1,127 @@
+{% extends 'linkScanner/base.html' %}
+{% block body %}
+<style>
+  body {
+    background-image: url('/static/linkScanner/r1.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat; 
+    height: 100vh;
+    margin:0;
+  }
+  
+    
+    .rounded-form {
+      border-radius: 10px; 
+      
+    }
+    
+      
+      form.p-3.shadow.rounded-form {
+        transition: box-shadow 0.3s ease;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.6);
+        border-radius: 10px;
+        padding: 20px; 
+      }
+    
+      form.p-3.shadow.rounded-form:hover {
+        box-shadow: 0 0 20px 5px rgba(5, 181, 181, 0.6) !important;
+        
+      }
+    
+    
+    
+    
+    .row{
+      margin-right: 30%;
+    margin-left: 30%;
+    margin-top: 30%;
+    margin-bottom: 10%;
+    
+      
+  
+
+    }
+    
+    .btn.btn-primary#let-me-know-button {
+      transition: background-color 0.3s ease;
+    }
+  
+    .btn.btn-primary#let-me-know-button:hover {
+      background-color: #161329 !important;
+    }
+    
+  
+</style>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+<div class="container-fluid" style="color:white;">
+  <div class="row">
+      <div class="col-lg-12">
+          
+      </div>
+  </div>
+
+
+<div class="row" style="justify-content:center">
+  <div class="col-lg-6" >
+      
+      <h2><b><center>Hmmm...Finding something wrong?</center></b></h2><br>
+      <form class="p-3 shadow rounded-form" method="POST" style="background-color: #3bb2c03d ; ">
+          {% csrf_token %}
+          <div class="form-group">
+            <form action="/result.html" method="post">
+              {% csrf_token %}
+              <div class="row mb-3">
+                <label for="reportLink" class="col-sm-2 col-form-label">Link</label>
+                <div class="col-sm-10">
+                  <input type="link" class="form-control" id="reportLink" name="reportLink" placeholder="Enter your untrusty link">
+                </div>
+              </div>
+              <div class="row mb-3">
+                <label for="Reason" class="col-sm-2 col-form-label">Source</label>
+                <div class="col-sm-10">
+                  <input type="text" class="form-control" id="Reason" placeholder="SMS, social media, whatsapp, etc..">
+                </div>
+              </div>
+              <fieldset class="row mb-3">
+                <legend class="col-form-label col-sm-2 pt-0">Level</legend>
+                <div class="col-sm-10" style="font-weight: bold;">
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" name="level" id="gridRadios1" value="Under Review" checked>
+                    <label class="form-check-label" for="gridRadios1">
+                      Under Review 
+                    </label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" name="level" id="gridRadios2" value="99% Suspicious">
+                    <label class="form-check-label" for="gridRadios2">
+                      99% Suspicious
+                    </label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" name="level" id="gridRadios3" value="Sadly, the Victim">
+                    <label class="form-check-label" for="gridRadios3">
+                      Sadly, the Victim
+                    </label>
+                  </div>
+                </div>
+              </fieldset>
+              <div class="row mb-3">
+                <div class="col-sm-10 offset-sm-2">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="gridCheck1">
+                    <label class="form-check-label" for="gridCheck1">
+                      I agree that the above information provided is true
+                    </label>
+                  </div>
+                </div>
+              </div>
+                <center><button type="submit" class="btn btn-primary" id="let-me-know-button">Let me Know</button></center>
+            </form>
+              
+          </div>
+      </form>
+  </div>
+
+{% endblock body %}

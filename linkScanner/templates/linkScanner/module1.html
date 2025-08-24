@@ -1,0 +1,67 @@
+{% extends 'linkScanner/base.html' %} {% block body %}
+<style>
+  body {
+    background-image: url("/static/linkScanner/c1.png");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    height: 100vh;
+    margin: 0;
+  }
+
+  .content {
+    margin-top:5%;
+    margin-left: 5%;
+    width: 90%;
+    max-width: 90%;
+    text-align: justify;
+    text-justify: inter-word;
+    margin-top: 5%;
+  }
+
+  #prev,#next{
+    background-color: rgb(5 181 181);
+    border-radius: 5px;
+    font-size: large;
+    padding: 10px;
+    margin-left: 50px;
+    margin-top: 20px;
+    color: #051b56;
+  }
+  #prev{
+    margin-right: 35%;
+  }
+  .mod{
+    background-color: rgb(5 181 181);
+    border-radius: 5px;
+    font-size: large;
+    padding: 10px;
+    display: inline;
+    margin-right: 38%;
+    color: #051b56;
+  }
+</style>
+<div class="buttons">
+    <a href="/module3"><button id="prev"><b>Prev</b></button></a>
+    <h1 class="mod">Module 1</h1>
+    <a href="/module2"><button id="next"><b>Next</b></button></a>
+  </div>
+<body>
+  <section id="another-section">
+    <div class="content">
+      <h1 style="text-align: center;">Cybercrime is defined in simple words as a crime that is done online.</h1>
+
+      Here, the medium used to commit crime digitally is the computer, network,
+      internet, or any electronic device. The main targets of cybercrime are
+      users of the system, websites, company defamation, gaining money, etc.
+      Some of the activities of cyber-criminals are listed below: Spread viruses
+      and malware to cause harm to computers and sensitive data. Attacks a
+      computer to reach the target or victim’s computer via network. Hack the
+      victim’s system and steals confidential information from the user’s data.
+      Gaining unauthorized access to user accounts. Paving ways for online scams
+      and frauds. Generate profit by selling or locking crucial data.
+    </div>
+  </section>
+</body>
+
+{% endblock body %}

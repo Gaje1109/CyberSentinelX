@@ -1,0 +1,51 @@
+{% extends 'linkScanner/base.html' %}
+
+{% block body %}
+</section>
+<style>
+    body {
+        background-image: url('/static/linkScanner/bg1.png');
+        background-size: cover;
+        background-position: center;
+
+    }
+</style>
+<script>
+    // JavaScript to control the typewriter effect
+    const text = "Because Trusting the Internet is so 2012";
+  
+    function typeWriterEffect() {
+      let i = 0;
+      const speed = 50; // Adjust the speed (milliseconds per character)
+  
+      function type() {
+        if (i < text.length) {
+          document.getElementById("typewriter-text").textContent += text.charAt(i);
+          i++;
+          setTimeout(type, speed);
+        }
+      }
+  
+      type();
+    }
+  
+    // Start the typewriter effect when the page loads
+    document.addEventListener("DOMContentLoaded", typeWriterEffect);
+  </script>
+  
+
+<section id="main-content" class="center-content">
+    <div class="text-content">
+        <h3 class="welcome">Hold The Truth...</h3>
+        <p id="typewriter-text"> </p>
+
+    </div>
+    <div class="link-scan">
+        <form action="/" method="post">
+            {% csrf_token %}
+            <input type="text" id="link-input" name="link" placeholder="Paste link here">
+            <button id="scan-button" type="submit">Scan</button>
+        </form>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,17 @@
+<h2>Email Scam Detection</h2>
+
+<form method="post" enctype="multipart/form-data">
+  {% csrf_token %}
+  <label>Paste Email Text:</label><br>
+  <textarea name="email_content" rows="10" cols="80" placeholder="Paste the email body here..."></textarea><br><br>
+
+  <label>OR Upload Email PDF:</label><br>
+  <input type="file" name="email_file"><br><br>
+
+  <button type="submit">Classify Email</button>
+</form>
+
+{% if result %}
+  <h3>🛡️ Prediction: {{ result }}</h3>
+  <p>Confidence: {{ confidence }}%</p>
+{% endif %}

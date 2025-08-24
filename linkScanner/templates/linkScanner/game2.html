@@ -1,0 +1,287 @@
+{% extends 'linkScanner/base.html' %} {% block body %}
+<style>
+  body {
+    font-family: "Arial", sans-serif;
+    background-color: #f4f4f4;
+    text-align: center;
+    margin: 0;
+    background-image: url("/static/linkScanner/c1.png");
+    background-size: cover;
+    background-position: center;
+    height: 100vh;
+  }
+
+  h1 {
+    color: #ffffff;
+  }
+
+  #question {
+    font-size: 20px;
+    margin-bottom: 20px;
+  }
+
+  .option {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    font-size: 16px;
+    text-align: left;
+    background-color: #4caf50;
+    color: #fff;
+    border: 1px solid #4caf50;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+
+  .option:hover {
+    background-color: #45a049;
+  }
+
+  .selected {
+    background-color: #014004 !important;
+  }
+
+  #result {
+    font-size: 20px;
+    font-weight: bold;
+    margin-top: 20px;
+  }
+
+  #quiz-summary {
+    margin-top: 20px;
+  }
+
+  #progress-bar {
+    width: 100%;
+    height: 20px;
+    background-color: #ddd;
+    border-radius: 4px;
+    margin-top: 20px;
+    overflow: hidden;
+  }
+
+  #progress-bar-inner {
+    height: 100%;
+    width: 0;
+    background-color: #4caf50;
+    border-radius: 4px;
+    transition: width 0.5s;
+  }
+
+  #nav-buttons {
+    margin-top: 20px;
+  }
+
+  .buttons {
+    background-color: rgb(5 181 181);
+    border-radius: 5px;
+    font-size: large;
+    padding: 10px;
+    margin-top: 10px;
+    color: #051b56;
+  }
+</style>
+
+<div class="content">
+  <h1>Phish Lingo Quiz</h1>
+  <div id="question"></div>
+  <div id="options"></div>
+  <button class="buttons" id="submitButton" onclick="checkAnswer()">
+    Submit Answer
+  </button>
+  <div id="result"></div>
+  <div id="quiz-summary"></div>
+  <div id="progress-bar">
+    <div id="progress-bar-inner"></div>
+  </div>
+  <div id="nav-buttons">
+    <a href="/game3" style="display: none" id="nextGame">
+    <button class="buttons">Next Game</button></a><br />
+    <a href="/game2" style="display: none" id="tryAgain">
+    <button class="buttons">Try Again</button></a>
+    <button class="buttons" id="restart" onclick=restartQuiz()>Restart Quiz</button>
+  </div>
+</div>
+
+<script>
+  let resultDisplay = 0;
+  const phishLingoQuiz = [
+    {
+      question: "What does 'Phishing' refer to?",
+      options: [
+        "Fishing in the ocean",
+        "A cyber attack to steal sensitive information",
+        "A popular online game",
+        "A type of bird",
+      ],
+      correctAnswer: 1,
+    },
+    {
+      question:
+        "Which type of phishing targets specific individuals or organizations?",
+      options: [
+        "Regular phishing",
+        "Spear phishing",
+        "Clone phishing",
+        "Vishing",
+      ],
+      correctAnswer: 1,
+    },
+    {
+      question:
+        "What is the term for a deceptive email or message that appears to be from a trusted source?",
+      options: ["Hoax", "Spam", "Phish", "Spoof"],
+      correctAnswer: 2,
+    },
+    // Add more questions and options as needed
+  ];
+
+  let currentQuestionIndex = 0;
+  const questionElement = document.getElementById("question");
+  const optionsElement = document.getElementById("options");
+  const resultElement = document.getElementById("result");
+  const quizSummaryElement = document.getElementById("quiz-summary");
+  const progressBarInner = document.getElementById("progress-bar-inner");
+  const navButtons = document.getElementById("nav-buttons");
+  let selectedOption = null;
+
+  function loadQuestion() {
+    const currentQuestion = phishLingoQuiz[currentQuestionIndex];
+    questionElement.textContent = currentQuestion.question;
+
+    optionsElement.innerHTML = "";
+    for (let i = 0; i < currentQuestion.options.length; i++) {
+      const optionText = currentQuestion.options[i];
+      const optionElement = document.createElement("div");
+      optionElement.className = "option";
+      optionElement.textContent = optionText;
+      optionElement.setAttribute("data-answer", i);
+      optionElement.addEventListener("click", selectOption);
+      optionsElement.appendChild(optionElement);
+    }
+
+    updateProgressBar();
+  }
+
+  function selectOption(event) {
+    const clickedOption = event.target;
+    if (selectedOption) {
+      selectedOption.classList.remove("selected");
+    }
+    clickedOption.classList.add("selected");
+    selectedOption = clickedOption;
+  }
+
+  function checkAnswer() {
+    if (selectedOption) {
+      const userAnswer = parseInt(selectedOption.getAttribute("data-answer"));
+      const currentQuestion = phishLingoQuiz[currentQuestionIndex];
+
+      if (userAnswer === currentQuestion.correctAnswer) {
+        resultElement.textContent = "Correct! 🎉";
+        resultDisplay += 1;
+      } else {
+        resultElement.textContent = "Wrong! 😟";
+      }
+
+      currentQuestionIndex++;
+
+      if (currentQuestionIndex < phishLingoQuiz.length) {
+        setTimeout(() => {
+          resultElement.textContent = "";
+          loadQuestion();
+        }, 800);
+      } else {
+        resultElement.textContent =
+          "Quiz complete! You've finished the Phish Lingo Quiz.";
+
+        document.getElementById("submitButton").style.display = "none";
+        document.getElementById("question").style.display = "none";
+        optionsElement.innerHTML = "";
+        updateProgressBar();
+        showQuizSummary();
+      }
+
+      selectedOption = null;
+      updateNavButtons();
+    }
+  }
+
+  function showQuizSummary() {
+    document.getElementById("restart").style.display="none";
+    const correctAnswers = phishLingoQuiz.filter(
+      (question, index) => question.correctAnswer === index
+    ).length;
+    quizSummaryElement.textContent =
+      "Game Over! You got " + resultDisplay + "/3";
+    if (resultDisplay >= 2) {
+      document.getElementById("nextGame").style.display = "inline";
+    } else {
+      document.getElementById("tryAgain").style.display = "inline";
+    }
+  }
+
+  function updateProgressBar() {
+    const progress = (currentQuestionIndex / phishLingoQuiz.length) * 100;
+    progressBarInner.style.width = `${progress}%`;
+    
+  }
+
+  function updateNavButtons() {
+    document.querySelectorAll(".option").forEach((option) => {
+      option.classList.remove("selected");
+    });
+
+    if (currentQuestionIndex > 0) {
+      document
+        .querySelector("button[onclick='prevQuestion']")
+        .removeAttribute("disabled");
+    } else {
+      document
+        .querySelector("button[onclick='prevQuestion']")
+        .setAttribute("disabled", true);
+    }
+
+    if (currentQuestionIndex < phishLingoQuiz.length - 1) {
+      document
+        .querySelector("button[onclick='nextQuestion']")
+        .removeAttribute("disabled");
+    } else {
+      document
+        .querySelector("button[onclick='nextQuestion']")
+        .setAttribute("disabled", true);
+    }
+  }
+
+  // function prevQuestion() {
+  //     if (currentQuestionIndex > 0) {
+  //         currentQuestionIndex--;
+  //         loadQuestion();
+  //         updateNavButtons();
+  //     }
+  // }
+
+  // function nextQuestion() {
+  //     if (currentQuestionIndex < phishLingoQuiz.length - 1) {
+  //         currentQuestionIndex++;
+  //         loadQuestion();
+  //         updateNavButtons();
+  //     }
+  // }
+
+  function restartQuiz() {
+    document.getElementById("submitButton").style.display = "inline";
+    document.getElementById("question").style.display = "block";
+    currentQuestionIndex = 0;
+    loadQuestion();
+    resultElement.textContent = "";
+    quizSummaryElement.textContent = "";
+    updateNavButtons();
+    resultDisplay = 0;
+  }
+
+  loadQuestion();
+</script>
+{% endblock %}

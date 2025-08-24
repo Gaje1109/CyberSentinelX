@@ -1,0 +1,109 @@
+{% extends 'linkScanner/base.html' %}
+{% block body %}
+
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Phishing Education</title>
+  <style>
+    body {
+      background-image: url("/static/linkScanner/c1.png");
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .content {
+      margin-top: 5%;
+    }
+
+    #heading {
+      padding: 20px;
+      color: white;
+      text-align: center;
+    }
+
+    #maze {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .path {
+      width: 100%;
+      padding: 20px;
+      background-color: rgb(5 181 181);
+      color: #fff;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .path:hover {
+      background-color: #4c66af;
+    }
+
+    .phish {
+      width: 100%;
+      padding: 20px;
+      background-color: #e74c3c;
+      color: #fff;
+      border: 1px solid #c0392b;
+      border-radius: 4px;
+      cursor: not-allowed;
+    }
+
+    a {
+      text-decoration: none;
+      color: white;
+    }
+  </style>
+</head>
+
+<body>
+  <h1 id="heading">Welcome to Phishing Education</h1>
+
+  <!-- {% for question in questions %}
+        <div>
+            <p>{{ question.question_text }}</p>
+            <form method="post" action="{% url 'phishing_app:check_answer' question.id %}">
+                {% csrf_token %}
+                <input type="text" name="user_answer" required>
+                <input type="submit" value="Submit">
+            </form>
+        </div>
+    {% endfor %} -->
+
+  <section id="content-box">
+    <div class="content">
+      <div id="maze">
+        <div class="path" style="grid-column: span 3;pointer-events: none; background-color: rgb(22, 19, 41);">Learn about phishing.</div>
+        <a href="/module1">
+          <div class="path">Module 1</div>
+        </a>
+        <a href="/module2">
+          <div class="path">Module 2</div>
+        </a>
+        <a href="/module3">
+          <div class="path">Module 3</div>
+        </a>
+        <div class="path" style="grid-column: span 3;pointer-events: none; background-color: rgb(22, 19, 41);">Review your progress.</div>
+        <a href="/game1" class="path">Game 1</a>
+        <a href="/game2" class="path">Game 2</a>
+        <a href="/game3" class="path">Game 3</a>
+
+        <!-- <div class="path"><a href="/game1">Game 1</a></div> -->
+        <!-- <div class="path">Go Straight</div>
+        <div class="path">Go Right</div> -->
+      </div>
+    </div>
+  </section>
+</body>
+
+</html>
+
+{% endblock body %}

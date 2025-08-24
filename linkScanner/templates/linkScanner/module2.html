@@ -1,0 +1,70 @@
+{% extends 'linkScanner/base.html' %} {% block body %}
+<style>
+  body {
+    background-image: url("/static/linkScanner/c1.png");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    height: 100vh;
+    margin: 0;
+  }
+
+  .content{
+    margin-left: 5%;
+    width: 90%;
+    max-width: 90%;
+    text-align: justify;
+    text-justify: inter-word;
+    margin-top: 5%;
+  }
+
+  #prev,#next{
+    background-color: rgb(5 181 181);
+    border-radius: 5px;
+    font-size: large;
+    padding: 10px;
+    margin-left: 50px;
+    margin-top: 20px;
+    color: #051b56;
+  }
+  #prev{
+    margin-right: 35%;
+  }
+  .mod{
+    background-color: rgb(5 181 181);
+    border-radius: 5px;
+    font-size: large;
+    padding: 10px;
+    display: inline;
+    margin-right: 38%;
+    color: #051b56;
+  }
+</style>
+  <div class="buttons">
+    <a href="/module1"><button id="prev"><b>Prev</b></button></a>
+    <h1 class="mod">Module 2</h1>
+    <a href="/module3"><button id="next"><b>Next</b></button></a>
+  </div>
+<body>
+  <section id="another-section">
+    <div class="content">
+      <h1 style="text-align: center;">How Does Phishing Occur?</h1>
+      <p>
+        <b>Clicking on an unknown file or attachment:</b> Here, the attacker
+        deliberately sends a mysterious file to the victim, as the victim opens
+        the file, either malware is injected into his system or it prompts the
+        user to enter confidential data. Using an open or free wifi hotspot:
+        This is a very simple way to get confidential information from the user
+        by luring him by giving him free wifi. The wifi owner can control the
+        user’s data without the user knowing it. Responding to social media
+        requests: This commonly includes social engineering. Accepting unknown
+        friend requests and then, by mistake, leaking secret data are the most
+        common mistake made by naive users. Clicking on unauthenticated links or
+        ads: Unauthenticated links have been deliberately crafted that lead to a
+        phished website that tricks the user into typing confidential data.
+      </p>
+
+    </div>
+  </section>
+</body>
+{% endblock body %}
