@@ -1,25 +1,109 @@
 {% extends "linkScanner/base.html" %}
+{% load static %}
 
 {% block body %}
-<div class="container mt-5">
-  <h2>Batch URL Classification (Excel Upload)</h2>
+<style>
+  body {
+    background: url("{% static 'linkScanner/bg1.png' %}") no-repeat center center fixed;
+    background-size: cover;
+    min-height: 100vh;
+    margin: 0;
+  }
 
-  {% if error %}<p style="color:red;">{{ error }}</p>{% endif %}
-  {% if success %}<p style="color:green;">{{ success }}</p>{% endif %}
+  .form-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - 80px);
+    padding: 2rem;
+  }
 
-  <form method="post" enctype="multipart/form-data" action="{% url 'upload_excel' %}">
-    {% csrf_token %}
-    <div class="mb-3">
-      <label for="excel_file" class="form-label">Upload Excel File:</label>
-      <input type="file" name="excel_file" id="excel_file" accept=".xlsx,.xls" class="form-control" required>
-    </div>
+  .form-container {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(12px);
+    padding: 2rem;
+    border-radius: 20px;
+    box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.3);
+    width: 100%;
+    max-width: 550px;
+    text-align: center;
+    color: #fff;
+  }
 
-    <div class="mb-3">
-      <label for="email" class="form-label">Your Email:</label>
-      <input type="email" name="email" id="email" class="form-control" required>
-    </div>
+  .form-container h2 {
+    margin-bottom: 1.5rem;
+    font-weight: bold;
+    color: #fff;
+  }
 
-    <button type="submit" class="btn btn-primary">Upload & Process</button>
-  </form>
+  /* Uniform Input Styles */
+  .form-control, .custom-file-label {
+    width: 100%;
+    border-radius: 8px;
+    padding: 10px;
+    border: none;
+    outline: none;
+    background: #fff;
+    color: #333;
+    box-shadow: 0px 4px 12px rgba(0,0,0,0.2);
+    margin-bottom: 1rem;
+    cursor: pointer;
+  }
+
+  /* Hide default file input */
+  .custom-file-input {
+    display: none;
+  }
+
+  .custom-file-label {
+    text-align: left;
+    display: block;
+  }
+
+  .custom-file-label::before {
+    content: "📂 Select Excel File";
+    font-weight: 500;
+    color: #555;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, #ff6a00, #ee0979);
+    border: none;
+    font-weight: bold;
+    padding: 10px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+  }
+
+  .btn-primary:hover {
+    transform: scale(1.05);
+    background: linear-gradient(135deg, #ee0979, #ff6a00);
+  }
+</style>
+
+<div class="form-wrapper">
+  <div class="form-container">
+    <h2>Batch URL Classification</h2>
+
+    {% if error %}
+      <p style="color:#ff4d4d;">{{ error }}</p>
+    {% endif %}
+    {% if success %}
+      <p style="color:#00ff99;">{{ success }}</p>
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data" action="{% url 'upload_excel' %}">
+      {% csrf_token %}
+
+      <!-- Custom File Upload (styled like input box) -->
+      <label for="excel_file" class="custom-file-label"></label>
+      <input type="file" name="excel_file" id="excel_file" accept=".xlsx,.xls" class="custom-file-input" required>
+
+      <!-- Email Input -->
+      <input type="email" name="email" id="email" class="form-control" placeholder="📧 Enter your email" required>
+
+      <button type="submit" class="btn btn-primary w-100">Upload & Process</button>
+    </form>
+  </div>
 </div>
 {% endblock %}

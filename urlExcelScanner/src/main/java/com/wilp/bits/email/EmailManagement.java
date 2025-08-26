@@ -42,7 +42,6 @@ public void emailConfigurations(String fileName, String to)
 private void sendEmailAttachment(String fileName, String message, String subject, String to, String from, String host) {
 	try
 	{
-	//	String fileName="D:\\Gajendran\\Python Virtual Environments\\CyberSentinelX\\classified_MAH_20240121_153659_1.xlsx";
 	//get the system properties
 	Properties properties= System.getProperties();
 	System.out.println("PROPERTIES: "+properties);

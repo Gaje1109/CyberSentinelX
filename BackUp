@@ -1,0 +1,151 @@
+Manage.py
+---------
+# #!/usr/bin/env python
+# """Django's command-line utility for administrative tasks."""
+# import os
+# import sys
+#
+#
+# def main():
+#     """Run administrative tasks."""
+#     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "cyberSniffer.settings")
+#     try:
+#         from django.core.management import execute_from_command_line
+#     except ImportError as exc:
+#         raise ImportError(
+#             "Couldn't import Django. Are you sure it's installed and "
+#             "available on your PYTHONPATH environment variable? Did you "
+#             "forget to activate a virtual environment?"
+#         ) from exc
+#     execute_from_command_line(sys.argv)
+#
+#
+# if __name__ == '__main__':
+#     main()
+
+##########################################################################################################################################################################################################################################
+wsgi.py
+-------
+
+# """
+# WSGI config for cyberSniffer project.
+#
+# It exposes the WSGI callable as a module-level variable named ``application``.
+#
+# For more information on this file, see
+# https://docs.djangoproject.com/en/4.2/howto/deployment/wsgi/
+# """
+#
+# import os
+#
+# from django.core.wsgi import get_wsgi_application
+#
+# os.environ.setdefault("DJANGO_SETTINGS_MODULE","cyberSniffer.settings")
+#
+# application = get_wsgi_application()'
+
+##########################################################################################################################################################################################################################################
+
+classify_email.html
+-------------------
+
+{#<h2>Email Scam Detection</h2>#}
+{##}
+{#<form method="post" enctype="multipart/form-data">#}
+{#  {% csrf_token %}#}
+{#  <label>Paste Email Text:</label><br>#}
+{#  <textarea name="email_content" rows="10" cols="80" placeholder="Paste the email body here..."></textarea><br><br>#}
+{##}
+{#  <label>OR Upload Email PDF:</label><br>#}
+{#  <input type="file" name="email_file"><br><br>#}
+{##}
+{#  <button type="submit">Classify Email</button>#}
+{#</form>#}
+{##}
+{#{% if result %}#}
+{#  <h3> Prediction: {{ result }}</h3>#}
+{#  <p>Confidence: {{ confidence }}%</p>#}
+{#{% endif %}#}
+##########################################################################################################################################################################################################################################
+excel_upload.html
+-----------------
+
+{#{% extends "linkScanner/base.html" %}#}
+{##}
+{##}
+{#{% block body %}#}
+{#    #}
+{#<div class="container mt-5">#}
+{#  <h2>Batch URL Classification (Excel Upload)</h2>#}
+{##}
+{#  {% if error %}<p style="color:red;">{{ error }}</p>{% endif %}#}
+{#  {% if success %}<p style="color:green;">{{ success }}</p>{% endif %}#}
+{##}
+{#  <form method="post" enctype="multipart/form-data" action="{% url 'upload_excel' %}">#}
+{#    {% csrf_token %}#}
+{#    <div class="mb-3">#}
+{#      <label for="excel_file" class="form-label">Upload Excel File:</label>#}
+{#      <input type="file" name="excel_file" id="excel_file" accept=".xlsx,.xls" class="form-control" required>#}
+{#    </div>#}
+{##}
+{#    <div class="mb-3">#}
+{#      <label for="email" class="form-label">Your Email:</label>#}
+{#      <input type="email" name="email" id="email" class="form-control" required>#}
+{#    </div>#}
+{##}
+{#    <button type="submit" class="btn btn-primary">Upload & Process</button>#}
+{#  </form>#}
+{#</div>#}
+{#{% endblock %}#}
+##########################################################################################################################################################################################################################################
+excelScanner/views.py
+-----------------------
+
+def upload_excel(request):
+    #Render the form on GET
+    if request.method == "GET":
+        return render(request, "linkScanner/excel_upload.html")
+
+    # Handle the file on POST
+    if request.method == "POST":
+        try:
+            # Field names must match your HTML form
+            excel_file = request.FILES.get("excel_file")
+            email = request.POST.get("email", "").strip()
+
+            if not excel_file:
+                return render(
+                    request,
+                    "linkScanner/excel_upload.html",
+                    {"error": "Please choose an Excel file to upload."},
+                )
+
+            # Save uploaded file to a temp location
+            input_path = os.path.join(tempfile.gettempdir(), excel_file.name)
+            with open(input_path, "wb+") as dest:
+                for chunk in excel_file.chunks():
+                    dest.write(chunk)
+
+            # Process with your existing pipeline
+            output_name = f"classified_{excel_file.name}"
+            output_path = os.path.join(tempfile.gettempdir(), output_name)
+            process_excel(input_path, output_path)
+
+
+            # Return processed file for immediate download
+            return FileResponse(open(output_path, "rb"), as_attachment=True, filename=output_name)
+
+        except Exception as e:
+            # Render the same page with the error message
+            return render(
+                request,
+                "linkScanner/excel_upload.html",
+                {"error": f"Processing failed: {e}"},
+            )
+
+    # Fallback for other HTTP verbs
+    return JsonResponse({"error": "Method not allowed"}, status=405)
+##########################################################################################################################################################################################################################################
+
+
+

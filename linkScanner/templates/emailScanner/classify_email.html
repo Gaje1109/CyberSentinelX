@@ -1,17 +1,123 @@
-<h2>Email Scam Detection</h2>
+{% extends "linkScanner/base.html" %}
+{% load static %}
 
-<form method="post" enctype="multipart/form-data">
-  {% csrf_token %}
-  <label>Paste Email Text:</label><br>
-  <textarea name="email_content" rows="10" cols="80" placeholder="Paste the email body here..."></textarea><br><br>
+{% block body %}
+<style>
+  /* Background Image */
+  body {
+    background: url("{% static 'linkScanner/bg1.png' %}") no-repeat center center fixed;
+    background-size: cover;
+    min-height: 100vh;
+    margin: 0;
+  }
 
-  <label>OR Upload Email PDF:</label><br>
-  <input type="file" name="email_file"><br><br>
+  .form-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - 80px);
+    padding: 2rem;
+  }
 
-  <button type="submit">Classify Email</button>
-</form>
+  .form-container {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(12px);
+    padding: 2rem;
+    border-radius: 20px;
+    box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.3);
+    width: 100%;
+    max-width: 700px;
+    text-align: center;
+    color: #fff;
+  }
 
-{% if result %}
-  <h3>🛡️ Prediction: {{ result }}</h3>
-  <p>Confidence: {{ confidence }}%</p>
-{% endif %}
+  .form-container h2 {
+    margin-bottom: 1.5rem;
+    font-weight: bold;
+    color: #fff;
+  }
+
+  /* Uniform Input Styles */
+  textarea, .form-control, .custom-file-label {
+    width: 100%;
+    border-radius: 8px;
+    padding: 10px;
+    border: none;
+    outline: none;
+    background: #fff;
+    color: #333;
+    box-shadow: 0px 4px 12px rgba(0,0,0,0.2);
+    margin-bottom: 1rem;
+    resize: vertical;
+  }
+
+  /* Hide default file input */
+  .custom-file-input {
+    display: none;
+  }
+
+  .custom-file-label {
+    text-align: left;
+    display: block;
+  }
+
+  .custom-file-label::before {
+    content: "📂 Select Email PDF";
+    font-weight: 500;
+    color: #555;
+  }
+
+  /* Button Styling */
+  .btn-primary {
+    background: linear-gradient(135deg, #ff6a00, #ee0979);
+    border: none;
+    font-weight: bold;
+    padding: 12px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    color: #fff;
+    width: 100%;
+  }
+
+  .btn-primary:hover {
+    transform: scale(1.05);
+    background: linear-gradient(135deg, #ee0979, #ff6a00);
+  }
+
+  /* Result Section */
+  .result-box {
+    margin-top: 1.5rem;
+    background: rgba(0,0,0,0.3);
+    padding: 1rem;
+    border-radius: 10px;
+    color: #fff;
+  }
+</style>
+
+<div class="form-wrapper">
+  <div class="form-container">
+    <h2>Email Scam Detection</h2>
+
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+
+      <!-- Email Text Area -->
+      <textarea name="email_content" rows="8" placeholder="✍️ Paste the email body here..."></textarea>
+
+      <!-- Custom File Upload -->
+      <label for="email_file" class="custom-file-label"></label>
+      <input type="file" name="email_file" id="email_file" class="custom-file-input" accept=".pdf">
+
+      <!-- Submit Button -->
+      <button type="submit" class="btn btn-primary">Classify Email</button>
+    </form>
+
+    {% if result %}
+      <div class="result-box">
+        <h3>Prediction: {{ result }}</h3>
+        <p>Confidence: {{ confidence }}%</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
