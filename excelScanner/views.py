@@ -9,7 +9,7 @@ def upload_excel_latest(request):
     if request.method == "POST":
         excel_file = request.FILES.get("excel_file")
         email = request.POST.get("email")
-        output_name = f"{excel_file.name}"
+        output_name = f"Updated_{excel_file.name}"
         output_path = os.path.join(tempfile.gettempdir(), output_name)
 
         # Excel Null check

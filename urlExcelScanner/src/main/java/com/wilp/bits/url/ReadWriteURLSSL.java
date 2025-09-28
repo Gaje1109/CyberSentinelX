@@ -109,9 +109,9 @@ public class ReadWriteURLSSL {
 		 header.createCell(2).setCellValue("RESPONSE URL");
 		 header.createCell(3).setCellValue("STATUS CODES");
 		 header.createCell(4).setCellValue("STATUS MESSAGE");
-		 header.createCell(5).setCellValue("CERTIFICATE START DATE");
-		 header.createCell(6).setCellValue("CERTIFICATE END DATE");
-		 header.createCell(7).setCellValue("CERTIFICATE ISSUER DATA");
+		// header.createCell(5).setCellValue("CERTIFICATE START DATE");
+		 //header.createCell(6).setCellValue("CERTIFICATE END DATE");
+		 //header.createCell(7).setCellValue("CERTIFICATE ISSUER DATA");
 		for( Row row: sheet)
 		{
 			//Skipping the first row since they are headers
@@ -576,14 +576,14 @@ public class ReadWriteURLSSL {
 			Cell message = row.createCell(4);
 			message.setCellValue(statusmessage);
 
-			Cell startdate1 = row.createCell(5);
-			startdate1.setCellValue(startdate);
-			
-			Cell enddate1 =row.createCell(6);
-			enddate1.setCellValue(enddate);
-			
-			Cell issuername =row.createCell(7);
-			issuername.setCellValue(IssueTo);	
+//			Cell startdate1 = row.createCell(5);
+//			startdate1.setCellValue(startdate);
+//			
+//			Cell enddate1 =row.createCell(6);
+//			enddate1.setCellValue(enddate);
+//			
+//			Cell issuername =row.createCell(7);
+//			issuername.setCellValue(IssueTo);	
 			workbook.write(fos);
 			fos.flush();
 			

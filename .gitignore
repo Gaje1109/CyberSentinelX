@@ -1,5 +1,3 @@
-# ── Python
-__pycache__/
 *.py[cod]
 *.egg-info/
 build/
@@ -32,7 +30,7 @@ db.sqlite3
 .coverage
 htmlcov/
 
-# ── Terraform (state & secrets never in git)
+# ── aws-terraform (state & secrets never in git)
 .terraform/
 *.tfstate
 *.tfstate.*

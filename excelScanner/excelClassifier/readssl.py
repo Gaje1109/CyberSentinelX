@@ -1,6 +1,7 @@
 import subprocess
 import os
 import glob
+import json
 
 jar_name = "CyberSentinelX-0.0.1-SNAPSHOT.jar"
 maven_project_path = "D:/Gajendran/Python Virtual Environments/CyberSentinelX/urlExcelScanner"
