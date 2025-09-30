@@ -53,3 +53,4 @@ wcwidth==0.2.12
 PyMuPDF
 joblib
 openpyxl
+gunicorn

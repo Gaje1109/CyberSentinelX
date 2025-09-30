@@ -1,0 +1,13 @@
+## docker-compose.yml
+
+servies:
+  web:
+    build: .
+    env_files: .env
+    ports:
+      - "80:8000"  # host:container
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000"]
+      interval: 15s
+      timeout: 3s
+      retries: 8
