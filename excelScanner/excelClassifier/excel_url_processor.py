@@ -2,13 +2,20 @@ import numpy as np
 import pandas as pd
 import pickle
 import re
+import os
 ###########################################
 from excelScanner.excelClassifier.readssl import call_read_ssl,sendemail
 from linkScanner.scanner import FeatureExtraction
 ###########################################
 
 # Load trained model
-model =  pickle.load(open('D:\Gajendran\Python Virtual Environments\CyberSentinelX\phishing_forestclassifier.pkl', 'rb'))
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+MODEL_PATH = os.path.join(BASE_DIR, "artifacts", "phishing_forestclassifier.pkl")
+with open(MODEL_PATH, "rb") as f:
+    model = pickle.load(f)
+
+#model =  pickle.load(open('D:\Gajendran\Python Virtual Environments\CyberSentinelX\phishing_forestclassifier.pkl', 'rb'))
 
 # Human-readable labels for each feature index
 FEATURE_NAMES = [

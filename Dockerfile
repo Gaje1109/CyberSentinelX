@@ -24,7 +24,7 @@ COPY . .
 COPY artifacts/CyberSentinelX-0.0.1-SNAPSHOT.jar /opt/csx/urlExcelScanner.jar
 
 # Django env basics
-ENV DJANGO_SETTINGS_MODULE=cyberSentinelX.settings \
+ENV DJANGO_SETTINGS_MODULE=cyberSniffer.settings \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     JAVA_BIN=java \
@@ -32,4 +32,4 @@ ENV DJANGO_SETTINGS_MODULE=cyberSentinelX.settings \
     JAVA_JAR_PATH=/opt/csx/urlExcelScanner.jar
 
 EXPOSE 8000
-CMD ["bash", "-lc", "gunicorn cyberSentinelX.wsgi:application --bind 0.0.0.0:8000 --workers 3"]
+CMD ["bash", "-lc", "gunicorn cyberSniffer.wsgi:application --bind 0.0.0.0:8000 --workers 3"]
