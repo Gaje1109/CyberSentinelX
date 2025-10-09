@@ -36,7 +36,6 @@
     color: #fff;
   }
 
-  /* Uniform Input Styles */
   .form-control, .custom-file-label {
     width: 100%;
     border-radius: 8px;
@@ -50,7 +49,6 @@
     cursor: pointer;
   }
 
-  /* Hide default file input */
   .custom-file-input {
     display: none;
   }
@@ -58,12 +56,17 @@
   .custom-file-label {
     text-align: left;
     display: block;
+    position: relative; /* Needed for the file name text */
   }
 
-  .custom-file-label::before {
-    content: "📂 Select Excel File";
+  /* NEW: Style for the selected file name text */
+  .file-name-text {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #333;
     font-weight: 500;
-    color: #555;
   }
 
   .btn-primary {
@@ -79,31 +82,136 @@
     transform: scale(1.05);
     background: linear-gradient(135deg, #ee0979, #ff6a00);
   }
+
+  /* NEW: Styles for the loading spinner */
+  .loader {
+    border: 5px solid #f3f3f3;
+    border-top: 5px solid #ee0979;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 1s linear infinite;
+    margin: 20px auto;
+  }
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  /* NEW: Styles for the download button */
+  .btn-download {
+      display: inline-block;
+      margin-top: 1rem;
+      background: linear-gradient(135deg, #11998e, #38ef7d);
+      color: white;
+      text-decoration: none;
+  }
+  .btn-download:hover {
+      transform: scale(1.05);
+  }
 </style>
 
 <div class="form-wrapper">
   <div class="form-container">
     <h2>Batch URL Classification</h2>
 
-    {% if error %}
-      <p style="color:#ff4d4d;">{{ error }}</p>
-    {% endif %}
-    {% if success %}
-      <p style="color:#00ff99;">{{ success }}</p>
-    {% endif %}
+    <!-- NEW: A container for messages (errors, success) -->
+    <div id="message-container" style="color:#ff4d4d; margin-bottom: 1rem;">
+        <p id="file-error-msg">No file uploaded</p>
+    </div>
 
-    <form method="post" enctype="multipart/form-data" action="{% url 'upload_excel' %}">
+    <!-- The form will be hidden during processing -->
+    <form id="upload-form" method="post" enctype="multipart/form-data">
       {% csrf_token %}
 
-      <!-- Custom File Upload (styled like input box) -->
-      <label for="excel_file" class="custom-file-label"></label>
+      <!-- Custom File Upload -->
+      <label for="excel_file" class="custom-file-label">
+          <span class="file-name-text">📂 Select Excel File</span>
+      </label>
       <input type="file" name="excel_file" id="excel_file" accept=".xlsx,.xls" class="custom-file-input" required>
 
-      <!-- Email Input -->
       <input type="email" name="email" id="email" class="form-control" placeholder="📧 Enter your email" required>
 
       <button type="submit" class="btn btn-primary w-100">Upload & Process</button>
     </form>
+
+    <!-- NEW: Loading spinner container (hidden by default) -->
+    <div id="loading-container" style="display: none;">
+        <div class="loader"></div>
+        <p>Processing your file... This may take a moment.</p>
+    </div>
+
+    <!-- NEW: Download link container (hidden by default) -->
+    <div id="download-container" style="display: none;">
+        <p style="color:#00ff99;">Processing complete!</p>
+        <a href="" id="download-link" class="btn btn-primary btn-download w-100">Download Processed File</a>
+    </div>
+
   </div>
 </div>
+
+<script>
+    const form = document.getElementById('upload-form');
+    const fileInput = document.getElementById('excel_file');
+    const fileNameText = document.querySelector('.file-name-text');
+    const fileErrorMsg = document.getElementById('file-error-msg');
+
+    const loadingContainer = document.getElementById('loading-container');
+    const downloadContainer = document.getElementById('download-container');
+    const downloadLink = document.getElementById('download-link');
+    const messageContainer = document.getElementById('message-container');
+
+    // 1. Show selected file name
+    fileInput.addEventListener('change', () => {
+        if (fileInput.files.length > 0) {
+            fileNameText.textContent = `📄 ${fileInput.files[0].name}`;
+            fileErrorMsg.style.display = 'none'; // Hide the "No file uploaded" message
+        } else {
+            fileNameText.textContent = '📂 Select Excel File';
+        }
+    });
+
+    // 2. Handle form submission with AJAX
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault(); // Stop the default page reload
+
+        const formData = new FormData(form);
+
+        // Show loader and hide form
+        form.style.display = 'none';
+        loadingContainer.style.display = 'block';
+        messageContainer.innerHTML = ''; // Clear previous messages
+        downloadContainer.style.display = 'none';
+
+        try {
+            const response = await fetch("{% url 'upload_excel' %}", {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+                }
+            });
+
+            const data = await response.json();
+
+            // Hide loader
+            loadingContainer.style.display = 'none';
+
+            if (response.ok) {
+                // SUCCESS: Show download link
+                downloadLink.href = data.download_url;
+                downloadContainer.style.display = 'block';
+            } else {
+                // ERROR: Show error message and bring back the form
+                messageContainer.innerHTML = `<p style="color:#ff4d4d;">${data.error}</p>`;
+                form.style.display = 'block';
+            }
+        } catch (error) {
+            // Network or other critical error
+            loadingContainer.style.display = 'none';
+            messageContainer.innerHTML = `<p style="color:#ff4d4d;">An unexpected error occurred. Please try again.</p>`;
+            form.style.display = 'block';
+        }
+    });
+</script>
 {% endblock %}

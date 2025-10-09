@@ -12,6 +12,7 @@ from sklearn.ensemble import RandomForestClassifier
 import pickle
 import ipaddress
 import re
+import os
 import urllib.request
 import socket
 from googlesearch import search
@@ -523,7 +524,14 @@ def train_model(url):
     pickle.dump(model,open('phishing_forestclassifier.pkl','wb'))
     
 def check(url):
-    loaded_model = pickle.load(open('phishing_forestclassifier.pkl', 'rb'))
+    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # /app
+    ARTIFACTS_DIR = os.path.join(BASE_DIR, "artifacts")
+
+    model_path = os.path.join(ARTIFACTS_DIR, "phishing_forestclassifier.pkl")
+
+    with open(model_path, "rb") as f:
+        loaded_model = pickle.load(f)
+    # loaded_model = pickle.load(open('phishing_forestclassifier.pkl', 'rb'))
     obj = FeatureExtraction(url)
     x = np.array(obj.getFeaturesList()).reshape(1,30)
     result = loaded_model.predict(x)

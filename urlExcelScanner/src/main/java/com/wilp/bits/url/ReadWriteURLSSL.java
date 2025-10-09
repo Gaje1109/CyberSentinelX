@@ -126,7 +126,7 @@ public class ReadWriteURLSSL {
 			
 			text =formatter.formatCellValue(cellnum);
 			
-			readWriteURLSSL.info("*****************************************URL VALIDATION ELITE**************************************");
+			readWriteURLSSL.info("*****************************************CYBERSENTINELX**************************************");
 			
 			
 			//If orginal(Request Url) is matching with Regex

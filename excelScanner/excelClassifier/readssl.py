@@ -4,9 +4,11 @@ import glob
 import json
 
 jar_name = "CyberSentinelX-0.0.1-SNAPSHOT.jar"
-maven_project_path = "D:/Gajendran/Python Virtual Environments/CyberSentinelX/urlExcelScanner"
+#maven_project_path = "D:/Gajendran/Python Virtual Environments/CyberSentinelX/urlExcelScanner"
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+target_dir = os.path.join(BASE_DIR, "artifacts")
 ## Find the build JAR in target/folder
-target_dir = os.path.join(maven_project_path, "target")
+#target_dir = os.path.join(maven_project_path, "target")
 sMethodsName  =""
 
 ##################################################################################################################

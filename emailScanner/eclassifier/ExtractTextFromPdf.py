@@ -7,3 +7,4 @@ def extractText_From_PDF(file_path):
         pdfcontent += page.get_text()
         
     return pdfcontent
+

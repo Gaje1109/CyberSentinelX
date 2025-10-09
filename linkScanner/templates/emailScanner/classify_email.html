@@ -3,95 +3,28 @@
 
 {% block body %}
 <style>
-  /* Background Image */
-  body {
-    background: url("{% static 'linkScanner/bg1.png' %}") no-repeat center center fixed;
-    background-size: cover;
-    min-height: 100vh;
-    margin: 0;
-  }
-
-  .form-wrapper {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: calc(100vh - 80px);
-    padding: 2rem;
-  }
-
-  .form-container {
-    background: rgba(255, 255, 255, 0.15);
-    backdrop-filter: blur(12px);
-    padding: 2rem;
-    border-radius: 20px;
-    box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.3);
-    width: 100%;
-    max-width: 700px;
-    text-align: center;
-    color: #fff;
-  }
-
-  .form-container h2 {
-    margin-bottom: 1.5rem;
-    font-weight: bold;
-    color: #fff;
-  }
-
-  /* Uniform Input Styles */
-  textarea, .form-control, .custom-file-label {
-    width: 100%;
-    border-radius: 8px;
-    padding: 10px;
-    border: none;
-    outline: none;
-    background: #fff;
-    color: #333;
-    box-shadow: 0px 4px 12px rgba(0,0,0,0.2);
-    margin-bottom: 1rem;
-    resize: vertical;
-  }
-
-  /* Hide default file input */
-  .custom-file-input {
-    display: none;
-  }
-
-  .custom-file-label {
-    text-align: left;
-    display: block;
-  }
-
-  .custom-file-label::before {
-    content: "📂 Select Email PDF";
+  body { background: url("{% static 'linkScanner/bg1.png' %}") no-repeat center center fixed; background-size: cover; min-height: 100vh; margin: 0; }
+  .form-wrapper { display: flex; align-items: center; justify-content: center; min-height: calc(100vh - 80px); padding: 2rem; }
+  .form-container { background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(12px); padding: 2rem; border-radius: 20px; box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.3); width: 100%; max-width: 700px; text-align: center; color: #fff; }
+  .form-container h2 { margin-bottom: 1.5rem; font-weight: bold; color: #fff; }
+  textarea, .form-control, .custom-file-label { width: 100%; border-radius: 8px; padding: 10px; border: none; outline: none; background: #fff; color: #333; box-shadow: 0px 4px 12px rgba(0,0,0,0.2); margin-bottom: 1rem; }
+  .custom-file-input { display: none; }
+  .custom-file-label { text-align: left; display: block; position: relative; cursor: pointer; }
+  .custom-file-label-text { /* A span to hold the text */
     font-weight: 500;
     color: #555;
   }
+  .btn-primary { background: linear-gradient(135deg, #ff6a00, #ee0979); border: none; font-weight: bold; padding: 12px; border-radius: 8px; transition: all 0.3s ease; color: #fff; width: 100%; }
+  .btn-primary:hover { transform: scale(1.05); background: linear-gradient(135deg, #ee0979, #ff6a00); }
 
-  /* Button Styling */
-  .btn-primary {
-    background: linear-gradient(135deg, #ff6a00, #ee0979);
-    border: none;
-    font-weight: bold;
-    padding: 12px;
-    border-radius: 8px;
-    transition: all 0.3s ease;
-    color: #fff;
-    width: 100%;
-  }
-
-  .btn-primary:hover {
-    transform: scale(1.05);
-    background: linear-gradient(135deg, #ee0979, #ff6a00);
-  }
-
-  /* Result Section */
-  .result-box {
-    margin-top: 1.5rem;
-    background: rgba(0,0,0,0.3);
-    padding: 1rem;
-    border-radius: 10px;
-    color: #fff;
-  }
+  /* Result Box Styles */
+  .result-box { margin-top: 1.5rem; background: rgba(0,0,0,0.4); padding: 1.5rem; border-radius: 10px; color: #fff; text-align: left; border-left: 5px solid; }
+  .result-box.spam { border-color: #ff4d4d; }
+  .result-box.ham { border-color: #00ff99; }
+  .result-box h3 { margin-top: 0; font-size: 1.5rem; }
+  .result-box p { margin: 0.5rem 0; }
+  .result-box .confidence { font-style: italic; opacity: 0.8; }
+  .result-box .details { word-wrap: break-word; background: rgba(0,0,0,0.3); padding: 0.5rem; border-radius: 5px; margin-top: 1rem; }
 </style>
 
 <div class="form-wrapper">
@@ -100,24 +33,45 @@
 
     <form method="post" enctype="multipart/form-data">
       {% csrf_token %}
+      <textarea name="email_content" rows="8" placeholder="✍️ Paste email content here..."></textarea>
 
-      <!-- Email Text Area -->
-      <textarea name="email_content" rows="8" placeholder="✍️ Paste the email body here..."></textarea>
+      <label for="email_file" class="custom-file-label" id="file-label">
+          <span class="custom-file-label-text">📂 Select Email PDF</span>
+      </label>
+      <input type="file" name="email_file" id="email_file" accept=".pdf" class="custom-file-input">
 
-      <!-- Custom File Upload -->
-      <label for="email_file" class="custom-file-label"></label>
-      <input type="file" name="email_file" id="email_file" class="custom-file-input" accept=".pdf">
-
-      <!-- Submit Button -->
-      <button type="submit" class="btn btn-primary">Classify Email</button>
+      <button type="submit" class="btn-primary">Analyze Email</button>
     </form>
 
-    {% if result %}
-      <div class="result-box">
-        <h3>Prediction: {{ result }}</h3>
-        <p>Confidence: {{ confidence }}%</p>
+    {% if analysis_result %}
+      <div class="result-box {% if analysis_result.result == 'SPAM' %}spam{% else %}ham{% endif %}">
+        <h3>Verdict: {{ analysis_result.result }}</h3>
+        <p class="confidence">Confidence: {{ analysis_result.confidence }}%</p>
+        <p><strong>Reason:</strong> {{ analysis_result.reason }}</p>
+        {% if analysis_result.details %}
+          <div class="details">
+            <strong>Details:</strong> {{ analysis_result.details }}
+          </div>
+        {% endif %}
       </div>
     {% endif %}
   </div>
 </div>
+
+<!-- JavaScript to display the selected filename -->
+<script>
+    const fileInput = document.getElementById('email_file');
+    const fileLabelText = document.querySelector('.custom-file-label-text');
+    const originalLabelText = fileLabelText.textContent;
+
+    fileInput.addEventListener('change', () => {
+        if (fileInput.files.length > 0) {
+            // If a file is selected, show its name
+            fileLabelText.textContent = `📄 ${fileInput.files[0].name}`;
+        } else {
+            // If no file is selected, revert to original text
+            fileLabelText.textContent = originalLabelText;
+        }
+    });
+</script>
 {% endblock %}

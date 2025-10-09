@@ -21,7 +21,10 @@ COPY . .
 
 # Building Java Jar
 # Put the JAR in a known path inside th image
-COPY artifacts/CyberSentinelX-0.0.1-SNAPSHOT.jar /opt/csx/urlExcelScanner.jar
+#COPY artifacts/CyberSentinelX-0.0.1-SNAPSHOT.jar /opt/csx/urlExcelScanner.jar
+# Copy JAR to /app/artifacts
+COPY artifacts/CyberSentinelX-0.0.1-SNAPSHOT.jar /app/artifacts/
+
 
 # Django env basics
 ENV DJANGO_SETTINGS_MODULE=cyberSniffer.settings \
@@ -29,7 +32,7 @@ ENV DJANGO_SETTINGS_MODULE=cyberSniffer.settings \
     PYTHONUNBUFFERED=1 \
     JAVA_BIN=java \
     JAVA_OPTS="-Xms256m -Xmx1024m" \
-    JAVA_JAR_PATH=/opt/csx/urlExcelScanner.jar
+    JAVA_JAR_PATH=app/artifacts/*.jar
 
 EXPOSE 8000
 CMD ["bash", "-lc", "gunicorn cyberSniffer.wsgi:application --bind 0.0.0.0:8000 --workers 3"]

@@ -1,13 +1,19 @@
-## docker-compose.yml
+# docker-compose.yml (Corrected for CI/CD)
+version: '3.8'
 
 services:
   web:
-    build: .
+    image: cybersentinelx:latest
+    container_name: cybersentinelx
     env_file: .env
     ports:
       - "80:8000"  # host:container
+    volumes:
+      # ONLY mount the database to persist data. Do NOT mount the project code.
+      - ./db.sqlite3:/app/db.sqlite3
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000"]
       interval: 15s
       timeout: 3s
       retries: 8
+    restart: always
