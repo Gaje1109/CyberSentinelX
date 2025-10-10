@@ -73,69 +73,64 @@ def explain(features):
 
 ## Process the incoming excel Files
 def process_excel(input_file, output_file):
-    """
-    Processes an Excel file, scans URLs with a local model and Google Safe Browsing,
-    and writes the final results to an output file.
-    """
     df = pd.read_excel(input_file, engine="openpyxl")
-
-    if "REQUEST URL" in df.columns:
-        url_col = "REQUEST URL"
-    elif "request url" in df.columns:
-        url_col = "request url"
-    else:
-        raise ValueError("No 'REQUEST URL' or 'request url' column found in Excel file")
-
+    url_col = "REQUEST URL" if "REQUEST URL" in df.columns else "request url"
     results = []
 
-    for rawurl in df[url_col]:
-        try:
-            # 1. Standardize the URL
-            url = str(rawurl).strip()
-            if not url.lower().startswith(('http://', 'https://')):
-                url = 'https://' + url
+    with requests.Session() as session:
+        for rawurl in df[url_col]:
+            try:
+                url = str(rawurl).strip()
+                if not url.lower().startswith(('http://', 'https://')):
+                    url = 'https://' + url
 
-            # 2. Get prediction from your local model
-            obj = FeatureExtraction(url)
-            features = obj.getFeaturesList()
-            prediction = model.predict(np.array(features).reshape(1, 30))[0]
-            model_label = "Safe" if prediction == 1 else "Unsafe"
+                obj = FeatureExtraction(url)
+                features = obj.getFeaturesList()
+                prediction = model.predict(np.array(features).reshape(1, 30))[0]
+                model_label = "Safe" if prediction == 1 else "Unsafe"
 
-            # 3. Get a second opinion from tuned model
-            model_tuned_label = verify_the_excel_urls_v2(url)
+                google_label = verify_the_excel_urls_v2(session, url)
 
-            # 4. Determine the final, authoritative result
-            if model_tuned_label == 'Unsafe':
-                final_label = 'Unsafe'
-            elif model_label == 'Unsafe' and model_tuned_label != 'API Error':
-                final_label = 'Caution'  # Your model is suspicious, but Google says it's okay
-            else:
-                final_label = 'Safe'
+                # --- NEW: Authoritative Decision Logic ---
+                final_status = ""
+                reason = ""
 
-            results.append({
-                "REQUEST URL": rawurl,  # Use the original URL for reporting
-                "Model Prediction": model_label,
-                "Second Prediction": model_tuned_label,
-                "Final Status": final_label
-            })
+                if google_label == 'Unsafe':
+                    final_status = 'Unsafe'
+                    reason = 'Flagged as Unsafe by Google Safe Browsing.'
 
-        except Exception as e:
-            results.append({
-                "REQUEST URL": rawurl,
-                "Model Prediction": "Processing Error",
-                "Second Prediction": "Not Checked",
-                "Final Status": "Error",
-                "Reason": str(e)  # Optional: add a reason column for errors
-            })
+                elif google_label == 'API Error':
+                    # Edge Case: If the API fails, trust the local model's verdict
+                    final_status = model_label
+                    reason = f'Flagged as {model_label} by Local Model (Google API check failed).'
 
-    # Save output Excel
+                else:  # Google API reports the URL is 'Safe'
+                    final_status = model_label  # Trust the local model
+                    if model_label == 'Unsafe':
+                        reason = 'Flagged as Unsafe by Local Model (Google API reported Safe).'
+                    else:
+                        reason = 'Considered Safe by both Local Model and Google API.'
+
+                results.append({
+                    "REQUEST URL": rawurl,
+                    "Final Status": final_status,
+                    "Reason": reason
+                })
+
+            except Exception as e:
+                results.append({
+                    "REQUEST URL": rawurl,
+                    "Final Status": "Error",
+                    "Reason": str(e)
+                })
+
     result_df = pd.DataFrame(results)
     result_df.to_excel(output_file, index=False, engine="openpyxl")
     print(f"Results with verification saved to {output_file}")
     return output_file
 
 # Through verification
-def verify_the_excel_urls_v2(url):
+def verify_the_excel_urls_v2(session, url):
     KEY = 'AIzaSyDb7Ii618KAtbydXwgdVNYKrzZXeyxRkzY'
 
     api_url = f'https://safebrowsing.googleapis.com/v4/threatMatches:find?key={KEY}'
@@ -151,7 +146,7 @@ def verify_the_excel_urls_v2(url):
     }
 
     try:
-        response = requests.post(api_url, json = payload)
+        response = session.post(api_url, json = payload, timeout= 13)
         response.raise_for_status()
 
             # If the response has 'matches'

@@ -55,6 +55,7 @@ def upload_excel_latest(request):
                                 status=500)
         print(f"L1 OK: {l1_temp_file_path}")
 
+        '''
         l2_temp_file_path = call_url_excel(l1_temp_file_path)
 
         if not isinstance(l2_temp_file_path, str) or not l2_temp_file_path.strip() or not os.path.exists(
@@ -63,12 +64,12 @@ def upload_excel_latest(request):
                 {"error": "Processing Failed - L2 (Java processor returned an invalid or non-existent file path)."},
                 status=500)
         print(f"L2 OK: {l2_temp_file_path}")
-
+        '''
         unique_id = uuid.uuid4().hex[:8]
         final_filename = f"{original_filename.stem}_processed_{unique_id}{original_filename.suffix}"
         final_public_path = os.path.join(settings.MEDIA_ROOT, final_filename)
 
-        shutil.move(l2_temp_file_path, final_public_path)
+        shutil.move(l1_temp_file_path, final_public_path)
 
         # --- NEW: Isolated email sending block ---
         # This ensures that even if the email fails, the user still gets a download link.
