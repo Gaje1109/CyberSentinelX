@@ -136,13 +136,16 @@ public class ReadWriteURLSSL {
 			/* In excel column no. starts from 0. */
 			// Headers
 			header.createCell(0).setCellValue("REQUEST URL");
-			header.createCell(5).setCellValue("RESPONSE URL");
-			header.createCell(6).setCellValue("STATUS CODES");
-			header.createCell(7).setCellValue("STATUS MESSAGE");
-			header.createCell(8).setCellValue("CERTIFICATE START DATE");
-			header.createCell(9).setCellValue("CERTIFICATE END DATE");
-			header.createCell(10).setCellValue("CERTIFICATE ISSUER DATA");
-			header.createCell(11).setCellValue("RISK LEVEL"); // 💎 NEW HEADER
+			header.createCell(1).setCellValue("INITIAL HEURISTIC VERDICT");
+			header.createCell(2).setCellValue("THREAT INTELLIGENCE STATUS");
+			header.createCell(3).setCellValue("ANALYSIS RATIONALE");
+			header.createCell(4).setCellValue("FINAL URL (AFTER REDIRECTS)");
+			header.createCell(5).setCellValue("HTTPS STATUS CODES");
+			header.createCell(6).setCellValue("HTTPS STATUS MESSAGE");
+			header.createCell(7).setCellValue("SSL CERTIFICATE VALID FROM");
+			header.createCell(8).setCellValue("SSL CERTIFICATE EXPIRES ON");
+			header.createCell(9).setCellValue("SSL CERTIFICATE ISSUER DATA");
+			header.createCell(10).setCellValue("OVERALL RISK ASSESSMENT");
 			 
 			for( Row row: sheet)
 			{
@@ -589,7 +592,7 @@ public class ReadWriteURLSSL {
 							certificateConfigurtions(host);
 						}
 						
-						// 💎 Final Risk Adjustment based on SSL Check
+						// Final Risk Adjustment based on SSL Check
 						if (IssueTo != null && IssueTo.startsWith("ERROR:")) {
 							if ("Low".equals(riskLevel) || "Medium".equals(riskLevel) || "Unknown".equals(riskLevel)) {
 								riskLevel = "High - SSL Failure";
@@ -620,7 +623,7 @@ public class ReadWriteURLSSL {
 			
 			}// for loop end
 			readWriteURLSSL.info("===========================================================");
-			readWriteURLSSL.info("excelReadAndCheck method  done Successfully !!!");
+			readWriteURLSSL.info("excelReadAndCheck method done Successfully !!!");
 			readWriteURLSSL.info("Inside "+methodsName+" -- End ");
 		}
 	}
@@ -714,24 +717,24 @@ public class ReadWriteURLSSL {
 			readWriteURLSSL.info("Issuer Name : "+IssueTo);
 			readWriteURLSSL.info("Risk Level : "+riskLevel); // Log new variable
 
-			Cell code = row.createCell(6);
+			Cell code = row.createCell(5);
 			code.setCellValue(status);
 			
-			Cell message = row.createCell(7);
+			Cell message = row.createCell(6);
 			message.setCellValue(statusmessage);
 
 			// Columns 8 and 9 (Dates) are left as null if there's a 999 error
 			
-			Cell startdate1 = row.createCell(8);
+			Cell startdate1 = row.createCell(7);
 			startdate1.setCellValue(startdate);
 			
-			Cell enddate1 =row.createCell(9);
+			Cell enddate1 =row.createCell(8);
 			enddate1.setCellValue(enddate);
 			
-			Cell issuername =row.createCell(10); // Column 11 (index 10)
+			Cell issuername =row.createCell(9);
 			issuername.setCellValue(IssueTo);	
 			
-			Cell riskLevelCell =row.createCell(11);
+			Cell riskLevelCell =row.createCell(10);
 			riskLevelCell.setCellValue(riskLevel);	
 			
 			workbook.write(fos);

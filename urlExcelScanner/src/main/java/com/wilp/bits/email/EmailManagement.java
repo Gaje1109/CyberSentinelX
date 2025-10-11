@@ -44,7 +44,7 @@ private void sendEmailAttachment(String fileName, String message, String subject
 	{
 	//get the system properties
 	Properties properties= System.getProperties();
-	System.out.println("PROPERTIES: "+properties);
+	//System.out.println("PROPERTIES: "+properties);
 
 	//Setting important information to properties object
 	properties.put("mail.smtp.host", host);
@@ -110,7 +110,7 @@ private void sendEmail(String message, String subject, String to, String from, S
 	{
 	//get the system properties
 	Properties properties= System.getProperties();
-	System.out.println("PROPERTIES: "+properties);
+	//System.out.println("PROPERTIES: "+properties);
 
 	//Setting important information to properties object
 	properties.put("mail.smtp.host", host);
@@ -166,7 +166,7 @@ public void sendFailedEmail(String message, String subject, String to, String fr
 	{
 	//get the system properties
 	Properties properties= System.getProperties();
-	System.out.println("PROPERTIES: "+properties);
+	//System.out.println("PROPERTIES: "+properties);
 
 	//Setting important information to properties object
 	properties.put("mail.smtp.host", host);

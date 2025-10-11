@@ -194,10 +194,10 @@ pipeline {
                     // The 'sh' step works on both Windows and Linux agents for ssh/scp
                     script {
                         // 1. Copy the deployment script to the remote server
-                        sh "scp -o StrictHostKeyChecking=no ./deploy.sh ${EC2_USER}@${EC2_HOST}:${DEPLOY_DIR}/deploy.sh"
+                        sh "scp -o StrictHostKeyChecking=no ./docker_deploy_app.sh ${EC2_USER}@${EC2_HOST}:${DEPLOY_DIR}/docker_deploy_app.sh"
 
                         // 2. SSH in, make the script executable, and then run it
-                        sh "ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} 'chmod +x ${DEPLOY_DIR}/deploy.sh && ${DEPLOY_DIR}/deploy.sh'"
+                        sh "ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} 'chmod +x ${DEPLOY_DIR}/docker_deploy_app.sh && ${DEPLOY_DIR}/docker_deploy_app.sh'"
                     }
                 }
             }

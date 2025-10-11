@@ -68,11 +68,14 @@
     }
 </style>
 
-<section id="another-section">
+    <section id="another-section">
     <div class="content">
-        <h2 id="display-result">Safe site to use</h2>
-        <p><a id="proceed-button" class="proceed-button" href="{{ target_url }}" target="_blank">Click here to proceed</a></p>
+        <h2 id="display-result">Safe Site to use</h2>
+
+        <p class="button-group">
+            <a id="proceed-button" class="proceed-button" href="{{ proceed_url }}" target="_blank">Click here to proceed</a>
             <button onclick="history.back()" class="back-button">Go Back</button>
+        </p>
     </div>
 </section>
 
