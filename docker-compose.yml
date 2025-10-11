@@ -1,31 +1,47 @@
-# docker-compose.yml
 services:
   web:
     image: cybersentinelx:latest
     container_name: cybersentinelx
     env_file: .env
-    ports:
-      - "80:8000"  # host:container
-    volumes:
-      # ONLY mount the database to persist data. Do NOT mount the project code.
-      - ./db.sqlite3:/app/db.sqlite3
-      - ./artifacts:/app/artifacts:ro
-      - ./urlExcelScanner/CyberSentinelX-0.0.1-SNAPSHOT.jar:/opt/csx/CyberSentinelX-0.0.1-SNAPSHOT.jar:ro
     environment:
+      # Gunicorn tuning
       GUNICORN_WORKERS: "2"
       GUNICORN_TIMEOUT: "600"
+
+      # DB path used by Django settings.py
+      SQLITE_PATH: "/data/db.sqlite3"
+
+      # Exact JAR path inside the container
       JAVA_JAR_PATH: "/opt/csx/CyberSentinelX-0.0.1-SNAPSHOT.jar"
+
+      # Optional metadata
       BUILD_TIME: "${BUILD_DATE:-$(date)}"
+
+    # Ensure /opt/csx exists before Gunicorn
     command: >
-      bash -lc "gunicorn cyberSniffer.wsgi:application
+      bash -lc "mkdir -p /opt/csx &&
+      gunicorn cyberSniffer.wsgi:application
       --bind 0.0.0.0:8000
       --workers ${GUNICORN_WORKERS}
       --timeout ${GUNICORN_TIMEOUT}"
+
+    ports:
+      - "80:8000"
+
+    volumes:
+      # Models (read-only)
+      - ./artifacts:/app/artifacts:ro
+      # SQLite lives in a writable directory
+      - ./data:/data
+      # Mount the built JAR at the path Django expects
+      - ./urlExcelScanner/CyberSentinelX-0.0.1-SNAPSHOT.jar:/opt/csx/CyberSentinelX-0.0.1-SNAPSHOT.jar:ro
+
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000"]
       interval: 15s
       timeout: 3s
       retries: 6
+
     restart: always
 
 x-build:

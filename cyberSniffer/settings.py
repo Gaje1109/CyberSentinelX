@@ -12,12 +12,15 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 from pathlib import Path
 import os
+import pathlib
 import whitenoise
 from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-DB_PATH = os.environ.get("SQLITE_PATH", os.path.join(BASE_DIR, "db.sqlite3"))
+
+DB_PATH = os.getenv("SQLITE_PATH", str(pathlib.Path(__file__).resolve().parent.parent / "db.sqlite3"))
+
 
 load_dotenv(os.path.join(BASE_DIR, '.env'))
 # Quick-start development settings - unsuitable for production
@@ -94,7 +97,6 @@ DATABASES = {
         'NAME' : DB_PATH,
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
