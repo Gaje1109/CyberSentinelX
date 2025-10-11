@@ -13,11 +13,12 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 from pathlib import Path
 import os
 import whitenoise
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
+load_dotenv(os.path.join(BASE_DIR, '.env'))
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
@@ -25,14 +26,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-e4)2))__12$2)3_bf)x761m(p&lt_thej)moe3q8+2&-_)%=y6'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = [
-    "13.126.16.47",   # your EC2 public IP
-    "localhost",
-    "127.0.0.1",
-]
-
+# ALLOWED_HOSTS = [
+#     "13.126.16.47",   # your EC2 public IP
+#     "localhost",
+#     "127.0.0.1",
+# ]
+ALLOWED_HOSTS =['*']
 
 # Application definition
 

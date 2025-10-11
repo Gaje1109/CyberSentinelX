@@ -4,6 +4,9 @@ import pickle
 import re
 import os
 import requests
+import time
+from django.conf import settings
+from dotenv import load_dotenv
 
 ###########################################
 from excelScanner.excelClassifier.readssl import call_read_ssl,sendemail
@@ -11,14 +14,16 @@ from linkScanner.scanner import FeatureExtraction
 ###########################################
 
 # Load trained model
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+### Commented for Docker
+#BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+#model =  pickle.load(open('D:\Gajendran\Python Virtual Environments\CyberSentinelX\phishing_forestclassifier.pkl', 'rb'))
 
-MODEL_PATH = os.path.join(BASE_DIR, "artifacts", "phishing_forestclassifier.pkl")
+
+MODEL_PATH = os.path.join(settings.BASE_DIR, "artifacts", "phishing_forestclassifier.pkl")
 with open(MODEL_PATH, "rb") as f:
     model = pickle.load(f)
 
-#model =  pickle.load(open('D:\Gajendran\Python Virtual Environments\CyberSentinelX\phishing_forestclassifier.pkl', 'rb'))
-
+load_dotenv()
 # Human-readable labels for each feature index
 FEATURE_NAMES = [
     "Using IP instead of domain",
@@ -71,11 +76,14 @@ def explain(features):
         return "No obvious risk"
     return "; ".join(reasons)
 
-## Process the incoming excel Files
+## Main Processing the incoming excel Files
 def process_excel(input_file, output_file):
     df = pd.read_excel(input_file, engine="openpyxl")
     url_col = "REQUEST URL" if "REQUEST URL" in df.columns else "request url"
     results = []
+    final_status = ""
+    reason = ""
+    vt_ratio = "Not Checked"
 
     with requests.Session() as session:
         for rawurl in df[url_col]:
@@ -84,65 +92,71 @@ def process_excel(input_file, output_file):
                 if not url.lower().startswith(('http://', 'https://')):
                     url = 'https://' + url
 
-                obj = FeatureExtraction(url)
-                features = obj.getFeaturesList()
-                prediction = model.predict(np.array(features).reshape(1, 30))[0]
-                model_label = "Safe" if prediction == 1 else "Unsafe"
+                # Level 1: Local Model Prediction
+                model_label = "Safe" if model.predict(np.array(FeatureExtraction(url).getFeaturesList()).reshape(1, 30))[0] == 1 else "Unsafe"
 
-                google_label = verify_the_excel_urls_v2(session, url)
+                # Level 2: Tuned model Prediction
+                secondary_label = verify_the_excel_urls_v2(session, url)
 
-                # --- NEW: Authoritative Decision Logic ---
-                final_status = ""
-                reason = ""
-
-                if google_label == 'Unsafe':
+                # --- Authoritative Decision Logic with All Edge Cases --
+                if secondary_label == 'Unsafe':
+                    # Rule 1: Primary service is authoritative.
                     final_status = 'Unsafe'
-                    reason = 'Flagged as Unsafe by Google Safe Browsing.'
+                    reason = 'Flagged as malicious by a secondary threat intelligence service.'
 
-                elif google_label == 'API Error':
-                    # Edge Case: If the API fails, trust the local model's verdict
-                    final_status = model_label
-                    reason = f'Flagged as {model_label} by Local Model (Google API check failed).'
-
-                else:  # Google API reports the URL is 'Safe'
-                    final_status = model_label  # Trust the local model
-                    if model_label == 'Unsafe':
-                        reason = 'Flagged as Unsafe by Local Model (Google API reported Safe).'
+                elif model_label == 'Unsafe' and secondary_label == 'Safe':
+                    # Rule 2: Conflict triggers a deep scan.
+                    tertiary_status, tertiary_ratio = verify_the_excel_urls_v3(session, url)
+                    if tertiary_status == 'Unsafe':
+                        final_status = 'Unsafe'
+                        reason = f'Confirmed malicious by deep analysis. (Detection Ratio: {tertiary_ratio})'
                     else:
-                        reason = 'Considered Safe by both Local Model and Google API.'
+                        final_status = 'Unsafe'  # Trust the initial heuristic model's suspicion
+                        reason = f'Flagged by local heuristics; deep analysis found no widespread threat. (Ratio: {tertiary_ratio})'
+
+                elif model_label == 'Unsafe' and secondary_label == 'Unsafe':
+                    # Rule 3: High confidence triggers a confirmation deep scan.
+                    final_status = 'Unsafe'
+                    tertiary_status, tertiary_ratio = verify_the_excel_urls_v3(session, url)
+                    reason = f'Confirmed malicious by multiple services. (Deep Analysis Ratio: {tertiary_ratio})'
+
+                elif secondary_label == 'API Error':
+                    # Rule 4 (Edge Case): Fallback to local model if primary service fails.
+                    final_status = model_label
+                    reason = f'Classified as {model_label} by local heuristics (Threat intelligence service was unavailable).'
+
+                else:  # Rule 5 (Default): Both checks agree the URL is safe.
+                    final_status = 'Safe'
+                    reason = 'Considered safe by all primary checks.'
 
                 results.append({
                     "REQUEST URL": rawurl,
                     "Final Status": final_status,
+                    "Deep Analysis Detections": tertiary_ratio,
                     "Reason": reason
                 })
-
             except Exception as e:
-                results.append({
-                    "REQUEST URL": rawurl,
-                    "Final Status": "Error",
-                    "Reason": str(e)
-                })
+                results.append(
+                    {"REQUEST URL": rawurl, "Final Status": "Processing Error", "VirusTotal Detections": "N/A",
+                     "Reason": str(e)})
+
 
     result_df = pd.DataFrame(results)
     result_df.to_excel(output_file, index=False, engine="openpyxl")
     print(f"Results with verification saved to {output_file}")
     return output_file
 
-# Through verification
+# 2nd Level Validation
 def verify_the_excel_urls_v2(session, url):
-    KEY = 'AIzaSyDb7Ii618KAtbydXwgdVNYKrzZXeyxRkzY'
-
-    api_url = f'https://safebrowsing.googleapis.com/v4/threatMatches:find?key={KEY}'
+    SECOND_KEY = os.getenv('SECOND_KEY')
+    SECOND_URL = os.getenv('SECOND_VALIDATION_API_URL')
+    api_url = f'{SECOND_URL}{SECOND_KEY}'
 
     payload = {
         'client': {'clientId': 'excel-scanner-app', 'clientVersion': '1.0'},
         'threatInfo': {
             'threatTypes': ['MALWARE', 'SOCIAL_ENGINEERING', 'UNWANTED_SOFTWARE', 'POTENTIALLY_HARMFUL_APPLICATION'],
-            'platformTypes': ['ANY_PLATFORM'],
-            'threatEntryTypes': ['URL'],
-            'threatEntries': [{'url': url}]
-        }
+            'platformTypes': ['ANY_PLATFORM'], 'threatEntryTypes': ['URL'], 'threatEntries': [{'url': url}]}
     }
 
     try:
@@ -161,6 +175,39 @@ def verify_the_excel_urls_v2(session, url):
         print(f"Error calling the URL '{url}': {e}"f"")
         return 'URL hit error'
 
+## 3rd level validation
+def verify_the_excel_urls_v3(session , url):
+    THREE_KEY =os.getenv('THREE_KEY')
+    THIRD_URL = os.getenv('THIRD_VALIDATION_API_URL')
+
+    headers = {'x-apikey': THREE_KEY}
+    try:
+        # Submit URL and get the analysis report ID
+        response = session.post(THIRD_URL, headers=headers, data={'url': url},
+                                timeout=10)
+        response.raise_for_status()
+        analysis_id = response.json()['data']['id']
+
+        # Wait for the report to be generated
+        time.sleep(15)
+
+        report_url = f'https://www.virustotal.com/api/v3/analyses/{analysis_id}'
+        response = session.get(report_url, headers=headers, timeout=10)
+        response.raise_for_status()
+
+        stats = response.json()['data']['attributes']['stats']
+        malicious_vendors = stats.get('malicious', 0)
+        total_vendors = sum(stats.values())
+
+        status = 'Unsafe' if malicious_vendors > 0 else 'Safe'
+        ratio = f"{malicious_vendors}/{total_vendors}"
+        return status, ratio
+
+    except requests.exceptions.RequestException as e:
+        print(f"ERROR: Validation 3 call failed for {url}: {e}")
+        return 'API Error', 'N/A'
+    except KeyError:
+        return 'API Error', 'Parsing Failed'
 
 ## verify email syntax
 def checkemailsyntax(email: str) -> bool:

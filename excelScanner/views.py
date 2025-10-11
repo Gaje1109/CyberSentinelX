@@ -27,6 +27,7 @@ def upload_excel_latest(request):
     excel_file = request.FILES.get("excel_file")
     email = (request.POST.get("email") or "").strip()
 
+    # --- Validation ---
     if not excel_file:
         return JsonResponse({"error": "No file was uploaded."}, status=400)
     if not email:
@@ -39,13 +40,25 @@ def upload_excel_latest(request):
     except ValidationError as ve:
         return JsonResponse({"error": str(ve)}, status=400)
 
+    # --- File Processing ---
     l1_temp_file_path = None
     l2_temp_file_path = None
     try:
         original_filename = Path(excel_file.name)
         temp_dir = os.path.join(settings.MEDIA_ROOT, 'excel_temp')
-        os.makedirs(temp_dir, exist_ok=True)
+        try:
+            os.makedirs(temp_dir, exist_ok=True)
+            # Test write permissions
+            test_file_path = os.path.join(temp_dir, f"test_{uuid.uuid4().hex}")
+            with open(test_file_path, 'w') as f:
+                f.write('test')
+            os.remove(test_file_path)
+        except PermissionError:
+            print("CRITICAL DOCKER ERROR: Permission denied to write to the temp directory.")
+            error_msg = "Internal Server Error: The application does not have permission to write temporary files. Please check Docker volume permissions."
+            return JsonResponse({"error": error_msg}, status=500)
 
+        # --- Continue with processing ---
         l1_temp_filename = f"L1_output_{uuid.uuid4().hex[:12]}{original_filename.suffix}"
         l1_temp_file_path = os.path.join(temp_dir, l1_temp_filename)
 
@@ -55,7 +68,7 @@ def upload_excel_latest(request):
                                 status=500)
         print(f"L1 OK: {l1_temp_file_path}")
 
-        '''
+
         l2_temp_file_path = call_url_excel(l1_temp_file_path)
 
         if not isinstance(l2_temp_file_path, str) or not l2_temp_file_path.strip() or not os.path.exists(
@@ -64,14 +77,14 @@ def upload_excel_latest(request):
                 {"error": "Processing Failed - L2 (Java processor returned an invalid or non-existent file path)."},
                 status=500)
         print(f"L2 OK: {l2_temp_file_path}")
-        '''
+
+        source_file_for_move = l2_temp_file_path # l2_temp_file_path
         unique_id = uuid.uuid4().hex[:8]
         final_filename = f"{original_filename.stem}_processed_{unique_id}{original_filename.suffix}"
         final_public_path = os.path.join(settings.MEDIA_ROOT, final_filename)
 
         shutil.move(l1_temp_file_path, final_public_path)
 
-        # --- NEW: Isolated email sending block ---
         # This ensures that even if the email fails, the user still gets a download link.
         try:
             callemail(final_public_path, email)
@@ -89,6 +102,7 @@ def upload_excel_latest(request):
         return JsonResponse({"error": f"An unexpected server error occurred during processing."}, status=500)
 
     finally:
+        # Cleanup any intermediate files that might be left over
         if l1_temp_file_path and os.path.exists(l1_temp_file_path):
             os.remove(l1_temp_file_path)
         if l2_temp_file_path and isinstance(l2_temp_file_path, str) and os.path.exists(l2_temp_file_path):

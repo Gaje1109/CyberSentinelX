@@ -1,0 +1,20 @@
+Git
+.git
+.gitignore
+
+Python virtual environment
+venv/
+*.pyc
+pycache/
+
+Environment variables file (secrets)
+.env
+
+Local Django files
+db.sqlite3
+media/
+excel_temp/
+
+IDE files
+.idea/
+.vscode/

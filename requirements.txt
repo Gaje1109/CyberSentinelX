@@ -53,3 +53,4 @@ joblib
 openpyxl
 gunicorn
 whitenoise
+dotenv

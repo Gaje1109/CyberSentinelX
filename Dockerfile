@@ -1,5 +1,25 @@
+# Stage -1 :  JAVA
+
+# We use a Maven image that includes the Java Development Kit (JDK)
+FROM maven:3.8-openjdk-8 AS builder
+
+# Set the working directory for the Java build
+WORKDIR /usr/src/app
+
+# Copy the Java source code into the builder stage
+COPY ./urlExcelScanner/ .
+
+# Run the Maven build command to compile the code and create the .jar file
+RUN mvn clean install
+
+
+# Stage -1 :  PYTHON
 # specify base image for our application
 FROM python:3.11-slim
+
+# Set environment variables for Python
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
 
 # Install JRE
 RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates gnupg \
@@ -9,14 +29,19 @@ RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certifi
  && apt-get update && apt-get install -y temurin-21-jre \
  && rm -rf /var/lib/apt/lists/*
 
-
+# Set the working directory for the Django app
 WORKDIR /app
 
 # Python dependencies
 COPY requirements.txt .
+
+# Install the Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# APP code
+# Copy the .jar file from the builder stage ---
+COPY --from=builder /usr/src/app/target/CyberSentinelX-0.0.1-SNAPSHOT.jar /app/java_processor/app.jar
+
+# Copy all your project files
 COPY . .
 
 # Building Java Jar
@@ -26,13 +51,11 @@ COPY . .
 COPY artifacts/CyberSentinelX-0.0.1-SNAPSHOT.jar /app/artifacts/
 
 
-# Django env basics
-ENV DJANGO_SETTINGS_MODULE=cyberSniffer.settings \
-    PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    JAVA_BIN=java \
-    JAVA_OPTS="-Xms256m -Xmx1024m" \
-    JAVA_JAR_PATH=app/artifacts/*.jar
+# Set environment variables for Django and Java
+ENV DJANGO_SETTINGS_MODULE=cyberSniffer.settings
+ENV JAVA_JAR_PATH=/app/java_processor/app.jar
 
+# Expose the port the app runs on
 EXPOSE 8000
+
 CMD ["bash", "-lc", "gunicorn cyberSniffer.wsgi:application --bind 0.0.0.0:8000 --workers 3"]

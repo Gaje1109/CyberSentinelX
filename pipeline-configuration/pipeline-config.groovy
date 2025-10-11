@@ -1,10 +1,5 @@
 /**
  * Declarative Jenkins Pipeline for a Hybrid Python/Django and Java Application
- *
- * S3-BASED DEPLOYMENT - NO 'PIPELINE: AWS STEPS' PLUGIN REQUIRED
- *
- * This version includes a diagnostic 'echo' statement to print the AWS Access Key
- * being used, helping to debug 'InvalidAccessKeyId' errors.
  */
 pipeline {
     agent any
@@ -22,6 +17,7 @@ pipeline {
         AWS_REGION = "ap-south-1"
         S3_MODELS_FOLDER = "artifactory"
         S3_DEPLOY_FOLDER= "cybersentinelx-docker-tar"
+
         // Jenkins Credentials IDs
         AWS_ACCESS_KEY_ID_CRED = "AWS_USERNAME"
         AWS_SECRET_KEY_CRED = "AWS_SECRETKEY"
@@ -31,6 +27,9 @@ pipeline {
         EC2_HOST = "13.126.16.47"
         EC2_USER = "ubuntu"
         DEPLOY_DIR = "/home/ubuntu/CyberSentinel_Dockerized"
+    }
+    triggers {
+        githubPush()
     }
 
     stages {
@@ -55,7 +54,8 @@ pipeline {
                 script {
                     echo "Downloading all models and data files from S3..."
                     def asset_dirs_to_sync = [
-                        "emailScanner/eclassifier/model"
+                        "emailScanner/eclassifier/model",
+                        "artifacts"
                     ]
                     withCredentials([
                         usernamePassword(credentialsId: AWS_ACCESS_KEY_ID_CRED, usernameVariable: 'AWS_ACCESS_KEY_ID_VALUE', passwordVariable: 'UNUSED_PASS_1'),
@@ -68,7 +68,12 @@ pipeline {
                         ]) {
                             asset_dirs_to_sync.each { dirPath ->
                                 echo "Syncing s3://${S3_BUCKET_NAME}/${S3_MODELS_FOLDER}/${dirPath}/ to local workspace at ${dirPath}/"
-                                bat "aws s3 sync s3://${S3_BUCKET_NAME}/${S3_MODELS_FOLDER}/${dirPath}/ ${dirPath}/"
+                                // UPDATED: Use sh or bat for AWS commands
+                                if (isUnix()) {
+                                    sh "aws s3 sync s3://${S3_BUCKET_NAME}/${S3_MODELS_FOLDER}/${dirPath}/ ./${dirPath}/"
+                                } else {
+                                    bat "aws s3 sync s3://${S3_BUCKET_NAME}/${S3_MODELS_FOLDER}/${dirPath}/ .\\${dirPath}\\"
+                                }
                             }
                         }
                     }
@@ -126,6 +131,19 @@ pipeline {
                             bat "aws s3 cp ${versionFile} s3://${S3_BUCKET_NAME}/${S3_DEPLOY_FOLDER}/"
                         }
                     }
+                }
+            }
+        }
+    }
+
+    stage('Deploy to EC2') {
+            steps {
+                echo "Deploying new version #${env.BUILD_NUMBER} to EC2 host ${EC2_HOST}..."
+                // Use the 'SSH Agent' plugin for secure, passwordless access
+                withCredentials([sshUserPrivateKey(credentialsId: EC2_CREDENTIALS_ID, keyFileVariable: 'SSH_KEY_FILE')]) {
+                    // This command connects to the EC2 server and executes the deployment script
+                    // It passes the necessary S3 bucket and folder names as arguments to the script
+                    sh "ssh -o StrictHostKeyChecking=no -i ${SSH_KEY_FILE} ${EC2_USER}@${EC2_HOST} 'bash -s' < ./deploy.sh ${S3_BUCKET_NAME} ${S3_DEPLOY_FOLDER}"
                 }
             }
         }

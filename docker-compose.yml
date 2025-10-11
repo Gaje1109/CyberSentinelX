@@ -1,6 +1,4 @@
-# docker-compose.yml (Corrected for CI/CD)
-version: '3.8'
-
+# docker-compose.yml
 services:
   web:
     image: cybersentinelx:latest

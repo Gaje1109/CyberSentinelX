@@ -1,0 +1,22 @@
+The Multi-Stage Build Explained
+Your Dockerfile is split into two main parts (or "stages"). Think of it like an assembly line.
+
+Stage 1: The "Java Builder"
+This first stage is a temporary, throwaway environment whose only job is to compile your Java code into a .jar file.
+
+1.FROM maven:3.8-openjdk-8 AS builder: This starts a temporary container using an official Maven image, which already has Java and Maven installed. We give it the nickname builder.
+
+2.WORKDIR /usr/src/app: Inside this temporary Maven container, we create and switch to a working directory named /usr/src/app. This is just an empty folder inside the container for us to work in.
+
+3.COPY ./urlExcelScanner/ .: This is where your folder comes in. Docker copies your local urlExcelScanner folder (which contains your pom.xml and Java source code) into the /usr/src/app directory inside the container.
+
+4.RUN mvn clean install: This command runs Maven inside the /usr/src/app directory. By default, when Maven builds a project, it creates a new folder called target and places the final compiled .jar file inside it.
+
+This is why you see the path /usr/src/app/target/CyberSentinelX-0.0.1-SNAPSHOT.jar. It's the standard output location for a Maven build happening inside the temporary container's workspace.
+
+Stage 2: The Final "Python" Image
+This is the lean, final container that will actually run your Django application.
+
+1. FROM python:3.11-slim: We start fresh with a lightweight Python image.
+
+2. COPY --from=builder ...: This is the magic step. This command reaches back into the temporary builder stage (which is now finished) and copies only the compiled .jar file from /usr/src/app/target/ into our new, clean Python image. The entire Maven environment, source code, and intermediate files from Stage 1 are discarded, keeping your final image small.

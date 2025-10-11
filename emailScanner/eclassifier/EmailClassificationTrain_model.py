@@ -6,7 +6,7 @@ from sklearn.metrics import accuracy_score
 import joblib
 import os
 
-
+## TRAINING THE EMAIL CLASSIFICATION FOR SPAM AND HAM
 # Load the Dataset
 email_df = pd.read_csv('/emailScanner/dataset/spam.csv', encoding='latin-1')
 email_df = email_df[['v1','v2']]

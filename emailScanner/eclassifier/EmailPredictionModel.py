@@ -2,10 +2,17 @@ import joblib
 import os
 import re
 import requests
-
+from django.conf import settings
+from dotenv import load_dotenv
 
 ## Load saved model and vectorizer
-EMAIL_MODEL_PATH = os.path.join(os.path.dirname(__file__), 'model')
+##Commented for Docker
+# EMAIL_MODEL_PATH = os.path.join(os.path.dirname(__file__), 'model')
+# email_model = joblib.load(os.path.join(EMAIL_MODEL_PATH, 'emailModel.pkl'))
+# email_vectorizer = joblib.load(os.path.join(EMAIL_MODEL_PATH, 'vectorizer.pkl'))
+
+#EMAIL_MODEL_PATH = os.path.join(settings.BASE_DIR, 'emailScanner', 'eclassifier', 'model')
+EMAIL_MODEL_PATH = os.path.join(settings.BASE_DIR, 'artifacts', 'email_scanner_models')
 email_model = joblib.load(os.path.join(EMAIL_MODEL_PATH, 'emailModel.pkl'))
 email_vectorizer = joblib.load(os.path.join(EMAIL_MODEL_PATH, 'vectorizer.pkl'))
 
@@ -33,8 +40,9 @@ def verify_urls_with_level2(urls):
     if not urls:
         return []
 
-    KEY = 'AIzaSyDb7Ii618KAtbydXwgdVNYKrzZXeyxRkzY'
-    api_url = f'https://safebrowsing.googleapis.com/v4/threatMatches:find?key={KEY}'
+    KEY = os.getenv('SECOND_KEY')
+    URL = os.getenv('SECOND_VALIDATION_API_URL')
+    api_url = f'{URL}{KEY}'
 
     payload = {
         'client': {'clientId': 'email-scanner-app', 'clientVersion': '1.0'},
@@ -60,7 +68,7 @@ def verify_urls_with_level2(urls):
     return flagged_urls
 
 
-# --- NEW: Master Analysis Function ---
+# --- Master Analysis Function ---
 def analyze_email_holistically(email_content):
     """
     Performs a multi-layered analysis of the email content.
