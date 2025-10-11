@@ -9,6 +9,7 @@ services:
     volumes:
       # ONLY mount the database to persist data. Do NOT mount the project code.
       - ./db.sqlite3:/app/db.sqlite3
+      - ./artifacts:/app/artifacts:ro
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000"]
       interval: 15s
