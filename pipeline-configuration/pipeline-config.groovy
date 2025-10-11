@@ -11,6 +11,7 @@ pipeline {
         JAVA_MODULE_PATH = "urlExcelScanner"
         GIT_REPO_URL = "https://github.com/Gaje1109/CyberSentinelX.git"
         GIT_BRANCH = "main"
+        GIT_REPO_PATH = "https://github.com/Gaje1109/CyberSentinelX"
 
         // AWS Configuration
         S3_BUCKET_NAME = "cybersentinelx-bits-capstone"
@@ -187,21 +188,57 @@ pipeline {
         }
 
         stage('Deploy to EC2') {
-            steps {
-                echo "Deploying new version #${env.BUILD_NUMBER} to EC2 host: ${EC2_HOST}"
-                // Use withCredentials for better compatibility on Windows agents
-                withCredentials([sshUserPrivateKey(credentialsId: EC2_CREDENTIALS_ID, keyFileVariable: 'SSH_KEY_FILE')]) {
-                    script {
-                        // 1. Securely copy the correct deployment script to the remote server
-                        bat "scp -o StrictHostKeyChecking=no -i %SSH_KEY_FILE% .\\docker_deploy_app.sh ${EC2_USER}@${EC2_HOST}:${DEPLOY_DIR}/docker_deploy_app.sh"
+          steps {
+            echo "Deploying new version #${env.BUILD_NUMBER} to EC2 host: ${EC2_HOST}"
+            withCredentials([sshUserPrivateKey(credentialsId: EC2_CREDENTIALS_ID, keyFileVariable: 'SSH_KEY_FILE')]) {
+              script {
+                // Script committed to Git and present in the workspace after 'git checkout'
+                def LOCAL_DEPLOY_SCRIPT_WIN = "${WORKSPACE}\\DockerScripts\\docker_deploy_app.sh"
+                def LOCAL_DEPLOY_SCRIPT_FWD = LOCAL_DEPLOY_SCRIPT_WIN.replace('\\','/')
+                def REMOTE_DEPLOY_SCRIPT    = "${DEPLOY_DIR}/docker_deploy_app.sh"
 
-                        // 2. SSH in, make the script executable, and then run it with parameters
-                        bat "ssh -o StrictHostKeyChecking=no -i %SSH_KEY_FILE% ${EC2_USER}@${EC2_HOST} \"chmod +x ${DEPLOY_DIR}/docker_deploy_app.sh && ${DEPLOY_DIR}/docker_deploy_app.sh ${S3_BUCKET_NAME} ${S3_DEPLOY_FOLDER} ${DEPLOY_DIR}\""
-                    }
-                }
+                // 1) Verify the script exists from the Git checkout
+                bat """
+                  echo WORKSPACE=%WORKSPACE%
+                  if not exist "${LOCAL_DEPLOY_SCRIPT_WIN}" (
+                    echo ERROR: File not found: ${LOCAL_DEPLOY_SCRIPT_WIN}
+                    dir /s /b DockerScripts\\*.sh
+                    exit /b 1
+                  )
+                """
+
+                // 2) Normalize CRLF -> LF (prevents bash^M on EC2)
+                bat """
+                  powershell -NoProfile -Command ^
+                    "$c = Get-Content -Raw \\"${LOCAL_DEPLOY_SCRIPT_WIN}\\"; ^
+                     $c = $c -replace '\\r\\n','`n'; ^
+                     Set-Content -NoNewline -Encoding Ascii \\"${LOCAL_DEPLOY_SCRIPT_WIN}\\" $c"
+                """
+
+                // 3) Ensure ssh/scp exist
+                bat "where ssh"
+                bat "where scp"
+
+                // 4) Create remote dir, copy, chmod, run
+                bat "ssh -o StrictHostKeyChecking=no -i \"%SSH_KEY_FILE%\" %EC2_USER%@%EC2_HOST% \"mkdir -p ${DEPLOY_DIR}\""
+
+                bat """
+                  scp -o StrictHostKeyChecking=no -i "%SSH_KEY_FILE%" ^
+                    "${LOCAL_DEPLOY_SCRIPT_FWD}" ^
+                    %EC2_USER%@%EC2_HOST%:${REMOTE_DEPLOY_SCRIPT}
+                """
+
+                bat """
+                  ssh -o StrictHostKeyChecking=no -i "%SSH_KEY_FILE%" ^
+                    %EC2_USER%@%EC2_HOST% ^
+                    "chmod +x ${REMOTE_DEPLOY_SCRIPT} && ${REMOTE_DEPLOY_SCRIPT} ${S3_BUCKET_NAME} ${S3_DEPLOY_FOLDER} ${DEPLOY_DIR}"
+                """
+              }
             }
+          }
         }
-    }
+
+
 
     post {
         always {
