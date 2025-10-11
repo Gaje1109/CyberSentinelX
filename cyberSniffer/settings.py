@@ -17,6 +17,7 @@ from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+DB_PATH = os.environ.get("SQLITE_PATH", os.path.join(BASE_DIR, "db.sqlite3"))
 
 load_dotenv(os.path.join(BASE_DIR, '.env'))
 # Quick-start development settings - unsuitable for production
@@ -26,7 +27,7 @@ load_dotenv(os.path.join(BASE_DIR, '.env'))
 SECRET_KEY = 'django-insecure-e4)2))__12$2)3_bf)x761m(p&lt_thej)moe3q8+2&-_)%=y6'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
+DEBUG = os.getenv('DJANGO_DEBUG', 'True') == 'True'
 
 # ALLOWED_HOSTS = [
 #     "13.126.16.47",   # your EC2 public IP
@@ -89,7 +90,8 @@ WSGI_APPLICATION = 'cyberSniffer.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        #'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME' : DB_PATH,
     }
 }
 

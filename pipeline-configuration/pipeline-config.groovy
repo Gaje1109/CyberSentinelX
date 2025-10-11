@@ -143,6 +143,9 @@ pipeline {
                 bat "aws s3 cp .env               s3://${S3_BUCKET_NAME}/${S3_DEPLOY_FOLDER}/"
                 bat "aws s3 cp ${versionFile}     s3://${S3_BUCKET_NAME}/${S3_DEPLOY_FOLDER}/"
                 bat "aws s3 cp DockerScripts/docker_deploy_app.sh s3://${S3_BUCKET_NAME}/${S3_DEPLOY_FOLDER}/"
+                bat 'copy /Y "urlExcelScanner\\target\\CyberSentinelX-0.0.1-SNAPSHOT.jar" "CyberSentinelX-0.0.1-SNAPSHOT.jar"'
+                bat "aws s3 cp CyberSentinelX-0.0.1-SNAPSHOT.jar s3://${S3_BUCKET_NAME}/${S3_DEPLOY_FOLDER}/CyberSentinelX-0.0.1-SNAPSHOT.jar"
+
               }
             }
           }
@@ -167,6 +170,7 @@ pipeline {
               aws s3 cp s3://${S3_BUCKET_NAME}/${S3_DEPLOY_FOLDER}/.env .
               aws s3 cp s3://${S3_BUCKET_NAME}/${S3_DEPLOY_FOLDER}/${APP_NAME}.tar .
               aws s3 cp s3://${S3_BUCKET_NAME}/${S3_DEPLOY_FOLDER}/docker_deploy_app.sh .
+              aws s3 cp s3://${S3_BUCKET_NAME}/${S3_DEPLOY_FOLDER}/CyberSentinelX-0.0.1-SNAPSHOT.jar ${DEPLOY_DIR}/urlExcelScanner/CyberSentinelX-0.0.1-SNAPSHOT.jar
 
               chmod +x docker_deploy_app.sh
 

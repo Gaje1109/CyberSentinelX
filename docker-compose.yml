@@ -10,9 +10,24 @@ services:
       # ONLY mount the database to persist data. Do NOT mount the project code.
       - ./db.sqlite3:/app/db.sqlite3
       - ./artifacts:/app/artifacts:ro
+      - ./urlExcelScanner/CyberSentinelX-0.0.1-SNAPSHOT.jar:/opt/csx/CyberSentinelX-0.0.1-SNAPSHOT.jar:ro
+    environment:
+      GUNICORN_WORKERS: "2"
+      GUNICORN_TIMEOUT: "600"
+      JAVA_JAR_PATH: "/opt/csx/CyberSentinelX-0.0.1-SNAPSHOT.jar"
+      BUILD_TIME: "${BUILD_DATE:-$(date)}"
+    command: >
+      bash -lc "gunicorn cyberSniffer.wsgi:application
+      --bind 0.0.0.0:8000
+      --workers ${GUNICORN_WORKERS}
+      --timeout ${GUNICORN_TIMEOUT}"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000"]
       interval: 15s
       timeout: 3s
-      retries: 8
+      retries: 6
     restart: always
+
+x-build:
+  args:
+    BUILD_DATE: "${BUILD_DATE:-$(date)}"
