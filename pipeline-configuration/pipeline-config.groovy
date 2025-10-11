@@ -1,5 +1,5 @@
 /**
- * Declarative Jenkins Pipeline for a Hybrid Python/Django and Java Application
+ * Corrected Declarative Jenkinsfile for a Hybrid Python/Django and Java Application
  */
 pipeline {
     agent any
@@ -16,18 +16,19 @@ pipeline {
         S3_BUCKET_NAME = "cybersentinelx-bits-capstone"
         AWS_REGION = "ap-south-1"
         S3_MODELS_FOLDER = "artifactory"
-        S3_DEPLOY_FOLDER= "cybersentinelx-docker-tar"
+        S3_DEPLOY_FOLDER = "cybersentinelx-docker-tar"
 
-        // Jenkins Credentials IDs
+        // Jenkins Credentials IDs (replace with your IDs)
         AWS_ACCESS_KEY_ID_CRED = "AWS_USERNAME"
-        AWS_SECRET_KEY_CRED = "AWS_SECRETKEY"
-        EC2_CREDENTIALS_ID = "cybersentinelx-ec2-ssh-key"
+        AWS_SECRET_KEY_CRED  = "AWS_SECRETKEY"
+        EC2_CREDENTIALS_ID   = "cybersentinelx-ec2-ssh-key"
 
         // EC2 Target Configuration
         EC2_HOST = "13.126.16.47"
         EC2_USER = "ubuntu"
         DEPLOY_DIR = "/home/ubuntu/CyberSentinel_Dockerized"
     }
+
     triggers {
         githubPush()
     }
@@ -36,15 +37,29 @@ pipeline {
         stage('Checkout Source Code') {
             steps {
                 echo "Checking out branch '${GIT_BRANCH}' from ${GIT_REPO_URL}..."
-                git branch: GIT_BRANCH, url: GIT_REPO_URL
+                git branch: "${GIT_BRANCH}", url: "${GIT_REPO_URL}"
             }
         }
 
         stage('Build Java Component') {
             steps {
                 echo "Building the Java component..."
-                dir(JAVA_MODULE_PATH) {
-                    bat 'mvn clean install'
+                dir("${JAVA_MODULE_PATH}") {
+                    script {
+                        if (isUnix()) {
+                            // Use mvn (ensure Maven is installed on agent)
+                            def mvnStatus = sh(script: "mvn clean install -DskipTests", returnStatus: true)
+                            if (mvnStatus != 0) {
+                                error "Maven build failed with exit code ${mvnStatus}"
+                            }
+                        } else {
+                            // Windows agent
+                            def mvnStatus = bat(script: "mvn clean install -DskipTests", returnStatus: true)
+                            if (mvnStatus != 0) {
+                                error "Maven build failed with exit code ${mvnStatus}"
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -52,14 +67,17 @@ pipeline {
         stage('Download Models and Data') {
             steps {
                 script {
-                    echo "Downloading all models and data files from S3..."
+                    echo "Downloading models and data files from S3..."
                     def asset_dirs_to_sync = [
                         "emailScanner/eclassifier/model",
                         "artifacts"
                     ]
+
+                    // Bind AWS credentials (usernamePassword is used here to map to two variables).
+                    // Make sure your Jenkins credentials are set up with those IDs.
                     withCredentials([
-                        usernamePassword(credentialsId: AWS_ACCESS_KEY_ID_CRED, usernameVariable: 'AWS_ACCESS_KEY_ID_VALUE', passwordVariable: 'UNUSED_PASS_1'),
-                        usernamePassword(credentialsId: AWS_SECRET_KEY_CRED,  usernameVariable: 'UNUSED_USER_2',    passwordVariable: 'AWS_SECRET_ACCESS_KEY_VALUE')
+                        usernamePassword(credentialsId: env.AWS_ACCESS_KEY_ID_CRED, usernameVariable: 'AWS_ACCESS_KEY_ID_VALUE', passwordVariable: 'UNUSED_AWS_USER'),
+                        usernamePassword(credentialsId: env.AWS_SECRET_KEY_CRED,  usernameVariable: 'UNUSED_AWS_USER2', passwordVariable: 'AWS_SECRET_ACCESS_KEY_VALUE')
                     ]) {
                         withEnv([
                             "AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID_VALUE}",
@@ -67,12 +85,17 @@ pipeline {
                             "AWS_DEFAULT_REGION=${AWS_REGION}"
                         ]) {
                             asset_dirs_to_sync.each { dirPath ->
-                                echo "Syncing s3://${S3_BUCKET_NAME}/${S3_MODELS_FOLDER}/${dirPath}/ to local workspace at ${dirPath}/"
-                                // UPDATED: Use sh or bat for AWS commands
+                                echo "Syncing s3://${S3_BUCKET_NAME}/${S3_MODELS_FOLDER}/${dirPath}/ -> ${dirPath}/"
                                 if (isUnix()) {
-                                    sh "aws s3 sync s3://${S3_BUCKET_NAME}/${S3_MODELS_FOLDER}/${dirPath}/ ./${dirPath}/"
+                                    def rc = sh(script: "aws s3 sync s3://${S3_BUCKET_NAME}/${S3_MODELS_FOLDER}/${dirPath}/ ./${dirPath}/ || true", returnStatus: true)
+                                    if (rc != 0) {
+                                        echo "Warning: aws s3 sync returned ${rc} for ${dirPath} (check logs)."
+                                    }
                                 } else {
-                                    bat "aws s3 sync s3://${S3_BUCKET_NAME}/${S3_MODELS_FOLDER}/${dirPath}/ .\\${dirPath}\\"
+                                    def rc = bat(script: "aws s3 sync s3://${S3_BUCKET_NAME}/${S3_MODELS_FOLDER}/${dirPath}/ .\\${dirPath}\\", returnStatus: true)
+                                    if (rc != 0) {
+                                        echo "Warning: aws s3 sync returned ${rc} for ${dirPath} (check logs)."
+                                    }
                                 }
                             }
                         }
@@ -85,11 +108,16 @@ pipeline {
             steps {
                 script {
                     echo "Building Docker image: ${APP_NAME}:${IMAGE_TAG}..."
-                    // This block captures the exit code of the build command
-                    def buildResult = bat(script: "docker build -t ${APP_NAME}:${IMAGE_TAG} .", returnStatus: true)
-                    // If the exit code is not 0 (success), fail the pipeline here
-                    if (buildResult != 0) {
-                        error "Docker build failed with exit code ${buildResult}. Check the logs above for details."
+                    if (isUnix()) {
+                        def buildResult = sh(script: "docker build -t ${APP_NAME}:${IMAGE_TAG} .", returnStatus: true)
+                        if (buildResult != 0) {
+                            error "Docker build failed with exit code ${buildResult}"
+                        }
+                    } else {
+                        def buildResult = bat(script: "docker build -t ${APP_NAME}:${IMAGE_TAG} .", returnStatus: true)
+                        if (buildResult != 0) {
+                            error "Docker build failed with exit code ${buildResult}"
+                        }
                     }
                 }
             }
@@ -100,67 +128,104 @@ pipeline {
                 script {
                     def imageTarFile = "${APP_NAME}.tar"
                     def versionFile = "latest-version.txt"
-
-                    writeFile file: versionFile, text: env.BUILD_NUMBER
+                    writeFile file: versionFile, text: "${env.BUILD_NUMBER}"
 
                     echo "Saving Docker image to ${imageTarFile}..."
-                    // Capture the exit code of the save command
-                    def saveResult = bat(script: "docker save ${APP_NAME}:${IMAGE_TAG} -o ${imageTarFile}", returnStatus: true)
-                    if (saveResult != 0) {
-                        error "Docker save failed with exit code ${saveResult}. Check the logs above for details."
+                    if (isUnix()) {
+                        def saveResult = sh(script: "docker save ${APP_NAME}:${IMAGE_TAG} -o ${imageTarFile}", returnStatus: true)
+                        if (saveResult != 0) {
+                            error "docker save failed with exit code ${saveResult}"
+                        }
+                    } else {
+                        def saveResult = bat(script: "docker save ${APP_NAME}:${IMAGE_TAG} -o ${imageTarFile}", returnStatus: true)
+                        if (saveResult != 0) {
+                            error "docker save failed with exit code ${saveResult}"
+                        }
                     }
 
-                    // Verify that the file was actually created before trying to use it
+                    // Verify the tar file exists
                     if (!fileExists(imageTarFile)) {
-                        error "CRITICAL: The 'docker save' command reported success, but the output file '${imageTarFile}' was not found."
+                        error "CRITICAL: ${imageTarFile} not found after docker save"
                     }
 
                     echo "Uploading artifacts to s3://${S3_BUCKET_NAME}/${S3_DEPLOY_FOLDER}/"
                     withCredentials([
-                        usernamePassword(credentialsId: AWS_ACCESS_KEY_ID_CRED, usernameVariable: 'AWS_ACCESS_KEY_ID_VALUE', passwordVariable: 'UNUSED_PASS_1'),
-                        usernamePassword(credentialsId: AWS_SECRET_KEY_CRED,  usernameVariable: 'UNUSED_USER_2',    passwordVariable: 'AWS_SECRET_ACCESS_KEY_VALUE')
+                        usernamePassword(credentialsId: env.AWS_ACCESS_KEY_ID_CRED, usernameVariable: 'AWS_ACCESS_KEY_ID_VALUE', passwordVariable: 'UNUSED_AWS_USER'),
+                        usernamePassword(credentialsId: env.AWS_SECRET_KEY_CRED,  usernameVariable: 'UNUSED_AWS_USER2', passwordVariable: 'AWS_SECRET_ACCESS_KEY_VALUE')
                     ]) {
                         withEnv([
                             "AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID_VALUE}",
                             "AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY_VALUE}",
                             "AWS_DEFAULT_REGION=${AWS_REGION}"
                         ]) {
-                            bat "aws s3 cp ${imageTarFile} s3://${S3_BUCKET_NAME}/${S3_DEPLOY_FOLDER}/"
-                            bat "aws s3 cp docker-compose.yml s3://${S3_BUCKET_NAME}/${S3_DEPLOY_FOLDER}/"
-                            bat "aws s3 cp .env s3://${S3_BUCKET_NAME}/${S3_DEPLOY_FOLDER}/"
-                            bat "aws s3 cp ${versionFile} s3://${S3_BUCKET_NAME}/${S3_DEPLOY_FOLDER}/"
+                            if (isUnix()) {
+                                def rc1 = sh(script: "aws s3 cp ${imageTarFile} s3://${S3_BUCKET_NAME}/${S3_DEPLOY_FOLDER}/", returnStatus: true)
+                                def rc2 = sh(script: "aws s3 cp docker-compose.yml s3://${S3_BUCKET_NAME}/${S3_DEPLOY_FOLDER}/", returnStatus: true)
+                                def rc3 = sh(script: "aws s3 cp .env s3://${S3_BUCKET_NAME}/${S3_DEPLOY_FOLDER}/", returnStatus: true)
+                                def rc4 = sh(script: "aws s3 cp ${versionFile} s3://${S3_BUCKET_NAME}/${S3_DEPLOY_FOLDER}/", returnStatus: true)
+                                if (rc1 != 0 || rc2 != 0 || rc3 != 0 || rc4 != 0) {
+                                    error "One or more aws s3 cp commands failed. Check the logs."
+                                }
+                            } else {
+                                def rc1 = bat(script: "aws s3 cp ${imageTarFile} s3://${S3_BUCKET_NAME}/${S3_DEPLOY_FOLDER}/", returnStatus: true)
+                                def rc2 = bat(script: "aws s3 cp docker-compose.yml s3://${S3_BUCKET_NAME}/${S3_DEPLOY_FOLDER}/", returnStatus: true)
+                                def rc3 = bat(script: "aws s3 cp .env s3://${S3_BUCKET_NAME}/${S3_DEPLOY_FOLDER}/", returnStatus: true)
+                                def rc4 = bat(script: "aws s3 cp ${versionFile} s3://${S3_BUCKET_NAME}/${S3_DEPLOY_FOLDER}/", returnStatus: true)
+                                if (rc1 != 0 || rc2 != 0 || rc3 != 0 || rc4 != 0) {
+                                    error "One or more aws s3 cp commands failed. Check the logs."
+                                }
+                            }
                         }
                     }
                 }
             }
         }
-    }
 
-    stage('Deploy to EC2') {
+        stage('Deploy to EC2') {
             steps {
                 echo "Deploying new version #${env.BUILD_NUMBER} to EC2 host ${EC2_HOST}..."
-                // Use the 'SSH Agent' plugin for secure, passwordless access
-                withCredentials([sshUserPrivateKey(credentialsId: EC2_CREDENTIALS_ID, keyFileVariable: 'SSH_KEY_FILE')]) {
-                    // This command connects to the EC2 server and executes the deployment script
-                    // It passes the necessary S3 bucket and folder names as arguments to the script
-                    sh "ssh -o StrictHostKeyChecking=no -i ${SSH_KEY_FILE} ${EC2_USER}@${EC2_HOST} 'bash -s' < ./deploy.sh ${S3_BUCKET_NAME} ${S3_DEPLOY_FOLDER}"
+                script {
+                    // Use SSH private key credential. This will write the key to a temporary file (SSH_KEY_FILE).
+                    withCredentials([sshUserPrivateKey(credentialsId: env.EC2_CREDENTIALS_ID, keyFileVariable: 'SSH_KEY_FILE')]) {
+                        // Build remote command to run deploy script with required args
+                        def remoteCommand = "bash -s -- ${S3_BUCKET_NAME} ${S3_DEPLOY_FOLDER} ${DEPLOY_DIR}"
+                        if (isUnix()) {
+                            // Unix agent: use sh to run ssh
+                            def rc = sh(script: "ssh -o StrictHostKeyChecking=no -i ${SSH_KEY_FILE} ${EC2_USER}@${EC2_HOST} '${remoteCommand}' < ./deploy.sh", returnStatus: true)
+                            if (rc != 0) {
+                                error "Remote deploy script failed with exit code ${rc}"
+                            }
+                        } else {
+                            // Windows agent: use plink/ssh via bat; adjust if plink is used instead
+                            def rc = bat(script: "ssh -o StrictHostKeyChecking=no -i ${SSH_KEY_FILE} ${EC2_USER}@${EC2_HOST} \"${remoteCommand}\" < ./deploy.sh", returnStatus: true)
+                            if (rc != 0) {
+                                error "Remote deploy script failed with exit code ${rc}"
+                            }
+                        }
+                    }
                 }
             }
         }
-    }
+    } // end stages
 
     post {
         always {
-            echo "Cleaning up local workspace..."
-            // These commands will now only run if the files were successfully created
-            bat "del /f /q ${APP_NAME}.tar"
-            bat "del /f /q latest-version.txt"
+            echo "Cleaning up local workspace artifacts..."
+            script {
+                if (isUnix()) {
+                    sh(script: "rm -f ${APP_NAME}.tar || true || echo 'no tar to delete'")
+                    sh(script: "rm -f latest-version.txt || true || echo 'no version file to delete'")
+                } else {
+                    bat(script: "if exist ${APP_NAME}.tar del /f /q ${APP_NAME}.tar")
+                    bat(script: "if exist latest-version.txt del /f /q latest-version.txt")
+                }
+            }
         }
         success {
             echo "Pipeline finished successfully! Artifacts for build #${env.BUILD_NUMBER} pushed to S3."
         }
         failure {
-            echo "Pipeline failed. Please check the logs."
+            echo "Pipeline failed. Please check the logs above for details."
         }
     }
 }
