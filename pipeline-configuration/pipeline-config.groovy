@@ -188,16 +188,15 @@ pipeline {
 
         stage('Deploy to EC2') {
             steps {
-                echo 'CyberSentinelX: Deploy to EC2 -- starts'
-                echo "Deploying new version #${env.BUILD_NUMBER} to EC2 host ${EC2_HOST}..."
-                sshagent(credentials: [EC2_CREDENTIALS_ID]) {
-                    // The 'sh' step works on both Windows and Linux agents for ssh/scp
+                echo "Deploying new version #${env.BUILD_NUMBER} to EC2 host: ${EC2_HOST}"
+                // Use withCredentials for better compatibility on Windows agents
+                withCredentials([sshUserPrivateKey(credentialsId: EC2_CREDENTIALS_ID, keyFileVariable: 'SSH_KEY_FILE')]) {
                     script {
-                        // 1. Copy the deployment script to the remote server
-                        sh "scp -o StrictHostKeyChecking=no ./docker_deploy_app.sh ${EC2_USER}@${EC2_HOST}:${DEPLOY_DIR}/docker_deploy_app.sh"
+                        // 1. Securely copy the correct deployment script to the remote server
+                        sh "scp -o StrictHostKeyChecking=no -i ${SSH_KEY_FILE} ./docker_deploy_app.sh ${EC2_USER}@${EC2_HOST}:${DEPLOY_DIR}/docker_deploy_app.sh"
 
-                        // 2. SSH in, make the script executable, and then run it
-                        sh "ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} 'chmod +x ${DEPLOY_DIR}/docker_deploy_app.sh && ${DEPLOY_DIR}/docker_deploy_app.sh'"
+                        // 2. SSH in, make the script executable, and then run it with parameters
+                        sh "ssh -o StrictHostKeyChecking=no -i ${SSH_KEY_FILE} ${EC2_USER}@${EC2_HOST} 'chmod +x ${DEPLOY_DIR}/docker_deploy_app.sh && ${DEPLOY_DIR}/docker_deploy_app.sh ${S3_BUCKET_NAME} ${S3_DEPLOY_FOLDER} ${DEPLOY_DIR}'"
                     }
                 }
             }
