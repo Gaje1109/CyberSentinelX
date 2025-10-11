@@ -4,9 +4,13 @@ import glob
 import json
 
 jar_name = "CyberSentinelX-0.0.1-SNAPSHOT.jar"
+
+#JAR_PATH = "D:/Gajendran/Python Virtual Environments/CyberSentinelX/artifacts/CyberSentinelX-0.0.1-SNAPSHOT.jar"
+JAR_PATH = os.getenv('JAVA_JAR_PATH')
+## Commented for Docker
 #maven_project_path = "D:/Gajendran/Python Virtual Environments/CyberSentinelX/urlExcelScanner"
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-target_dir = os.path.join(BASE_DIR, "artifacts")
+# BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# target_dir = os.path.join(BASE_DIR, "artifacts")
 ## Find the build JAR in target/folder
 #target_dir = os.path.join(maven_project_path, "target")
 sMethodsName  =""
@@ -17,14 +21,12 @@ def call_read_ssl(input_file):
     sMethodsName = "readssl.call_read_ssl()"
     main_class = "com.wilp.bits.url.ReadWriteURLSSL"
 
-    jar_files = glob.glob(os.path.join(target_dir,jar_name ))
-    jar_files = [f for f in jar_files if not (f.endswith("-sources.jar") or f.endswith("-javadoc.jar"))]
-    if not jar_files:
-        raise FileNotFoundError(f"No JAR file found in target directory: {sMethodsName}")
-    jar_path = jar_files[0]
+    if not JAR_PATH or not os.path.exists(JAR_PATH):
+        raise FileNotFoundError(
+            f"Java JAR path not found or invalid. Ensure the JAVA_JAR_PATH environment variable is set correctly. Current value: '{JAR_PATH}'")
 
     result = subprocess.run(
-        ["java", "-cp", jar_path, main_class, input_file],
+        ["java", "-cp", JAR_PATH, main_class, input_file],
         capture_output=True,
         text=True
     )
@@ -56,20 +58,15 @@ def sendemail(output_file,email):
     email_class = "com.wilp.bits.email.EmailManagement"
     args = [output_file,email]
     print(args)
-    jar_files = glob.glob(os.path.join(target_dir, jar_name))
-    ## Exclude sources.jar and -javadoc.jar
-    jar_files = [f for f in jar_files if not (f.endswith("-sources.jar") or f.endswith("-javadoc.jar"))]
+    if not JAR_PATH or not os.path.exists(JAR_PATH):
+        raise FileNotFoundError(
+            f"Java JAR path not found or invalid. Ensure the JAVA_JAR_PATH environment variable is set correctly. Current value: '{JAR_PATH}'")
 
-    ## Check if jar file exist
-    if not jar_files:
-        raise FileNotFoundError(f"No JAR file found in target directory: {sMethodsName}")
-
-    jar_path = jar_files[0]  # Take the first matching JAR
-    print(f"Found JAR: {jar_path}")
+    print(f"Found JAR: {JAR_PATH}")
 
     ## Run the Java class from the JAR
     result = subprocess.run(
-        ["java", "-cp", jar_path, email_class] + args,
+        ["java", "-cp", JAR_PATH, email_class] + args,
         capture_output=True,
         text=True
     )

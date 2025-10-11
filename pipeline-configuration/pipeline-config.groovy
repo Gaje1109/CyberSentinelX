@@ -1,5 +1,5 @@
 /**
- * Corrected Declarative Jenkinsfile for a Hybrid Python/Django and Java Application
+ * CyberSentinelX:  Declarative groovy file for a Hybrid Python-Java Application
  */
 pipeline {
     agent any
@@ -36,13 +36,16 @@ pipeline {
     stages {
         stage('Checkout Source Code') {
             steps {
+                echo 'CyberSentinelX: Git checkout -- starts'
                 echo "Checking out branch '${GIT_BRANCH}' from ${GIT_REPO_URL}..."
                 git branch: "${GIT_BRANCH}", url: "${GIT_REPO_URL}"
+                echo 'CyberSentinelX: Git checkout -- ends'
             }
         }
 
         stage('Build Java Component') {
             steps {
+                echo 'CyberSentinelX: Build Java Component -- starts'
                 echo "Building the Java component..."
                 dir("${JAVA_MODULE_PATH}") {
                     script {
@@ -67,6 +70,7 @@ pipeline {
         stage('Download Models and Data') {
             steps {
                 script {
+                    echo 'CyberSentinelX: Download Models and Data -- starts'
                     echo "Downloading models and data files from S3..."
                     def asset_dirs_to_sync = [
                         "emailScanner/eclassifier/model",
@@ -107,6 +111,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
+                    echo 'CyberSentinelX: Build Docker Image -- starts'
                     echo "Building Docker image: ${APP_NAME}:${IMAGE_TAG}..."
                     if (isUnix()) {
                         def buildResult = sh(script: "docker build -t ${APP_NAME}:${IMAGE_TAG} .", returnStatus: true)
@@ -129,7 +134,7 @@ pipeline {
                     def imageTarFile = "${APP_NAME}.tar"
                     def versionFile = "latest-version.txt"
                     writeFile file: versionFile, text: "${env.BUILD_NUMBER}"
-
+                    echo 'CyberSentinelX: Push Artifacts and Version to S3 -- starts'
                     echo "Saving Docker image to ${imageTarFile}..."
                     if (isUnix()) {
                         def saveResult = sh(script: "docker save ${APP_NAME}:${IMAGE_TAG} -o ${imageTarFile}", returnStatus: true)
@@ -183,33 +188,25 @@ pipeline {
 
         stage('Deploy to EC2') {
             steps {
+                echo 'CyberSentinelX: Deploy to EC2 -- starts'
                 echo "Deploying new version #${env.BUILD_NUMBER} to EC2 host ${EC2_HOST}..."
-                script {
-                    // Use SSH private key credential. This will write the key to a temporary file (SSH_KEY_FILE).
-                    withCredentials([sshUserPrivateKey(credentialsId: env.EC2_CREDENTIALS_ID, keyFileVariable: 'SSH_KEY_FILE')]) {
-                        // Build remote command to run deploy script with required args
-                        def remoteCommand = "bash -s -- ${S3_BUCKET_NAME} ${S3_DEPLOY_FOLDER} ${DEPLOY_DIR}"
-                        if (isUnix()) {
-                            // Unix agent: use sh to run ssh
-                            def rc = sh(script: "ssh -o StrictHostKeyChecking=no -i ${SSH_KEY_FILE} ${EC2_USER}@${EC2_HOST} '${remoteCommand}' < ./deploy.sh", returnStatus: true)
-                            if (rc != 0) {
-                                error "Remote deploy script failed with exit code ${rc}"
-                            }
-                        } else {
-                            // Windows agent: use plink/ssh via bat; adjust if plink is used instead
-                            def rc = bat(script: "ssh -o StrictHostKeyChecking=no -i ${SSH_KEY_FILE} ${EC2_USER}@${EC2_HOST} \"${remoteCommand}\" < ./deploy.sh", returnStatus: true)
-                            if (rc != 0) {
-                                error "Remote deploy script failed with exit code ${rc}"
-                            }
-                        }
+                sshagent(credentials: [EC2_CREDENTIALS_ID]) {
+                    // The 'sh' step works on both Windows and Linux agents for ssh/scp
+                    script {
+                        // 1. Copy the deployment script to the remote server
+                        sh "scp -o StrictHostKeyChecking=no ./deploy.sh ${EC2_USER}@${EC2_HOST}:${DEPLOY_DIR}/deploy.sh"
+
+                        // 2. SSH in, make the script executable, and then run it
+                        sh "ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} 'chmod +x ${DEPLOY_DIR}/deploy.sh && ${DEPLOY_DIR}/deploy.sh'"
                     }
                 }
             }
         }
-    } // end stages
+    }
 
     post {
         always {
+            echo 'CyberSentinelX: CleanUp -- starts'
             echo "Cleaning up local workspace artifacts..."
             script {
                 if (isUnix()) {
@@ -222,10 +219,10 @@ pipeline {
             }
         }
         success {
-            echo "Pipeline finished successfully! Artifacts for build #${env.BUILD_NUMBER} pushed to S3."
+            echo "CyberSentinelX: Pipeline finished successfully! Artifacts for build #${env.BUILD_NUMBER} pushed to S3."
         }
         failure {
-            echo "Pipeline failed. Please check the logs above for details."
+            echo "CyberSentinelX: Pipeline failed. Please check the logs above for details."
         }
     }
 }

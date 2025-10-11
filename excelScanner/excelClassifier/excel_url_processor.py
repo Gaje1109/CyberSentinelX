@@ -81,12 +81,12 @@ def process_excel(input_file, output_file):
     df = pd.read_excel(input_file, engine="openpyxl")
     url_col = "REQUEST URL" if "REQUEST URL" in df.columns else "request url"
     results = []
-    final_status = ""
-    reason = ""
-    vt_ratio = "Not Checked"
 
     with requests.Session() as session:
         for rawurl in df[url_col]:
+            final_status = "Error"
+            reason = "An unexpected error occurred."
+            tertiary_ratio = "Not Checked"
             try:
                 url = str(rawurl).strip()
                 if not url.lower().startswith(('http://', 'https://')):
@@ -128,17 +128,17 @@ def process_excel(input_file, output_file):
                 else:  # Rule 5 (Default): Both checks agree the URL is safe.
                     final_status = 'Safe'
                     reason = 'Considered safe by all primary checks.'
-
-                results.append({
-                    "REQUEST URL": rawurl,
-                    "Final Status": final_status,
-                    "Deep Analysis Detections": tertiary_ratio,
-                    "Reason": reason
-                })
             except Exception as e:
                 results.append(
                     {"REQUEST URL": rawurl, "Final Status": "Processing Error", "VirusTotal Detections": "N/A",
                      "Reason": str(e)})
+
+            results.append({
+                "REQUEST URL": rawurl,
+                "MODEL PREDICTION RESULT": final_status,
+                "ANALYSIS DETECTION RESULT": tertiary_ratio,
+                "COMMENT": reason
+            })
 
 
     result_df = pd.DataFrame(results)
