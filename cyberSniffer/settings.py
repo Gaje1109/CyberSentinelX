@@ -19,6 +19,7 @@ from dotenv import load_dotenv
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+#For Docker
 DB_PATH = os.getenv("SQLITE_PATH", str(pathlib.Path(__file__).resolve().parent.parent / "db.sqlite3"))
 
 
@@ -65,7 +66,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
-APPEND_SLASH = True
+
 
 ROOT_URLCONF = 'cyberSniffer.urls'
 
@@ -94,8 +95,9 @@ WSGI_APPLICATION = 'cyberSniffer.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        #'NAME': BASE_DIR / 'db.sqlite3',
-        'NAME' : DB_PATH,
+        'NAME': BASE_DIR / 'db.sqlite3',
+        # for docker
+        #'NAME' : DB_PATH,
     }
 }
 
@@ -132,9 +134,12 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
-
-STATIC_URL = '/static/'
+FORCE_SCRIPT_NAME = '/app'
+#STATIC_URL = '/static/'
+STATIC_URL = '/app/static/'
+MEDIA_URL  = '/app/media/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+APPEND_SLASH = True
 # STATICFILES_DIRS = [
 #     BASE_DIR / "static",
 #     "/var/www/static/",

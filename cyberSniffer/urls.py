@@ -16,28 +16,45 @@ Including another URLconf
 """
 from django.contrib import admin
 from linkScanner import views
-from django.urls import path, include
+from django.urls import path, include, re_path
 from django.conf import settings
 from django.conf.urls.static import static
 
-
 urlpatterns = [
+    # apps (accepts /email and /email/)
     path('email/', include('emailScanner.urls')),
     path('excel/', include('excelScanner.urls')),
     path('admin/', admin.site.urls),
-    path('',views.home),
-    path('learn/', views.learn),
-    path('report/', views.report),
-    path('contact/', views.contact),
-    path('about/', views.about),
-    path('result/', views.result),
-    path('module1/',views.module1),
-    path('module2/',views.module2),
-    path('module3/',views.module3),
-    path('game1/',views.game1),
-    path('game2/',views.game2),
-    path('game3/',views.game3)
+    path('', views.home),
+    re_path(r"^learn/?$", views.learn, name="learn"),
+    re_path(r"^report/?$", views.report, name="report"),
+    re_path(r"^contact/?$", views.contact, name="contact"),
+    re_path(r"^about/?$", views.about, name="about"),
+    re_path(r"^result/?$", views.result, name="result"),
+    re_path(r"^module1/?$", views.module1, name="module1"),
+    re_path(r"^module2/?$", views.module2, name="module2"),
+    re_path(r"^module3/?$", views.module3, name="module3"),
+    re_path(r"^game1/?$", views.game1, name="game1"),
+    re_path(r"^game2/?$", views.game2, name="game2"),
+    re_path(r"^game3/?$", views.game3, name="game3"),
 ]
+# urlpatterns = [
+#     path('email/', include('emailScanner.urls')),
+#     path('excel/', include('excelScanner.urls')),
+#      path('admin/', admin.site.urls),
+#      path('',views.home),
+#     path('learn/', views.learn),
+#     path('report/', views.report),
+#     path('contact/', views.contact),
+#     path('about/', views.about),
+#     path('result/', views.result),
+#     path('module1/',views.module1),
+#     path('module2/',views.module2),
+#     path('module3/',views.module3),
+#     path('game1/',views.game1),
+#     path('game2/',views.game2),
+#     path('game3/',views.game3)
+# ]
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
