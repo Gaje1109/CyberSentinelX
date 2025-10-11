@@ -22,8 +22,9 @@ services:
       bash -lc "mkdir -p /opt/csx &&
       gunicorn cyberSniffer.wsgi:application
       --bind 0.0.0.0:8000
-      --workers ${GUNICORN_WORKERS}
-      --timeout ${GUNICORN_TIMEOUT}"
+      --workers ${GUNICORN_WORKERS:-2}
+      --timeout ${GUNICORN_TIMEOUT:-600}"
+
 
     ports:
       - "80:8000"
