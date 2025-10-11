@@ -5,8 +5,10 @@ import json
 
 jar_name = "CyberSentinelX-0.0.1-SNAPSHOT.jar"
 
-#JAR_PATH = "D:/Gajendran/Python Virtual Environments/CyberSentinelX/artifacts/CyberSentinelX-0.0.1-SNAPSHOT.jar"
-JAR_PATH = os.getenv('JAVA_JAR_PATH')
+# For local
+JAR_PATH = "D:/Gajendran/Python Virtual Environments/CyberSentinelX/artifacts/CyberSentinelX-0.0.1-SNAPSHOT.jar"
+# For Docker
+#JAR_PATH = os.getenv('JAVA_JAR_PATH')
 ## Commented for Docker
 #maven_project_path = "D:/Gajendran/Python Virtual Environments/CyberSentinelX/urlExcelScanner"
 # BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
