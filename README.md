@@ -83,7 +83,7 @@ A rigorous testing strategy confirmed the system's robustness and accuracy:
 
 1.  **Clone the Repository:**
     ```bash
-    git clone [https://github.com/Gaje1109/CyberSentinelX.git](https://github.com/Gaje1109/CyberSentinelX.git)
+    git clone https://github.com/Gaje1109/CyberSentinelX.git
     cd CyberSentinelX
     ```
 2.  **Create and Activate Virtual Environment:**
@@ -100,7 +100,7 @@ A rigorous testing strategy confirmed the system's robustness and accuracy:
     ```bash
     python manage.py runserver
     ```
-    Access the application locally at: **👉 $\text{http://127.0.0.1:8000/}$**
+    Access the application locally at: **👉 http://127.0.0.1:8000/}**
 
 ---
 
